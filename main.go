@@ -15,8 +15,35 @@ limitations under the License.
 */
 package main
 
-import "ethereum-explorer/cmd"
+import (
+	"database/sql"
+	"ethereum-explorer/logger"
+
+	"github.com/go-sql-driver/mysql"
+)
 
 func main() {
-  cmd.Execute()
+//  cmd.Execute()
+
+  cfg := mysql.Config{
+    User:   "test_user",
+    Passwd: "1234",
+    Net:    "tcp",
+    Addr:   "127.0.0.1:3306",
+    DBName: "testdb",
+  }
+
+  db, err := sql.Open("mysql", cfg.FormatDSN())
+  
+	if err != nil {
+		logger.Logger.Error("db error")
+		
+	}
+  
+	result, err := db.Query("SELECT aa, bb FROM test")
+  
+  for result.Next() {
+    
+  }
 }
+
