@@ -11,8 +11,14 @@ type Block struct {
 	Hash string `json:"hash"`
 }
 
-type BlockRepository interface{
+type BlockRepository interface {
 	CreateBlock(c context.Context, block *Block) error
-	GetBlock(c context.Context) ([]Block, error)
+	GetBlocks(c context.Context) ([]Block, error)
+	GetBlockByHeight(c context.Context, height uint) (Block, error)
+}
+
+type BlockUseCase interface {
+	CreateBlock(c context.Context, block *Block) error
+	GetBlocks(c context.Context) ([]Block, error)
 	GetBlockByHeight(c context.Context, height uint) (Block, error)
 }

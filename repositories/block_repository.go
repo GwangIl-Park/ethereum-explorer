@@ -21,10 +21,10 @@ func (br *blockRepository) CreateBlock(c context.Context, block *models.Block) e
 	return nil
 }
 
-func (br *blockRepository) GetBlock(c context.Context) ([]models.Block, error) {
+func (br *blockRepository) GetBlocks(c context.Context) ([]models.Block, error) {
 	rows, err := br.db.Query("SELECT * from blocks")
 	if err != nil {
-
+		return nil, err
 	}
 	var blockHeight, size, gasUsed int
 	var receipient, hash string
