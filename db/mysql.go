@@ -2,11 +2,14 @@ package db
 
 import (
 	"database/sql"
+	"ethereum-explorer/config"
 	"ethereum-explorer/logger"
+	"fmt"
 )
 
-func New() (*sql.DB, error) {
-	db, err := sql.Open("mysql", "root:pwd@tcp(127.0.0.1:3306)/testdb")
+func NewDB(cfg *config.Config) (*sql.DB, error) {
+	dataSource := fmt.Sprintf("%s:%s@tcp(%s:%s/%s)", cfg.DBUser, cfg.DBPassword, cfg.DBHost, cfg.DBPort, cfg.DBName)
+	db, err := sql.Open("mysql", dataSource)
 	if err != nil {
 		logger.Logger.Error("db error")
 		return nil, err
