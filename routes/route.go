@@ -1,15 +1,12 @@
 package routes
 
 import (
-	"database/sql"
-	"time"
-
-	"github.com/gin-gonic/gin"
+	"ethereum-explorer/server"
 )
 
-func Setup(timeout *time.Duration, db *sql.DB, gin *gin.Engine) {
-	publicRouter := gin.Group("")
+func Setup(server *server.Server) {
+	publicRouter := server.Gin.Group("")
 
-	NewBlockRouter(*timeout, db, publicRouter)
-	NewTransactionRouter(*timeout, db, publicRouter)
+	NewBlockRouter(server.Timeout, server.Db, publicRouter)
+	NewTransactionRouter(server.Timeout, server.Db, publicRouter)
 }

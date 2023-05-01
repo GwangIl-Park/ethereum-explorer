@@ -15,6 +15,6 @@ func NewTransactionRouter(timeout time.Duration, db *sql.DB, group *gin.RouterGr
 		TransactionUsecase: usecases.NewTransactionUsecase(tr, timeout),
 	}
 	group.GET("/transactions", tc.GetTransactions)
-	group.GET("/transaction/:hash", tc.GetTransactionByHash)
-	group.GET("/transaction/:account", tc.GetTransactionsByAccount)
+	group.GET("/transaction/hash/:hash", tc.GetTransactionByHash)
+	group.GET("/transaction/account/:account", tc.GetTransactionsByAccount)
 }
