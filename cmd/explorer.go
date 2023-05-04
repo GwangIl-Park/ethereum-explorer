@@ -3,7 +3,9 @@ package cmd
 import (
 	"ethereum-explorer/config"
 	"ethereum-explorer/db"
+	"ethereum-explorer/ethClient"
 	"ethereum-explorer/routes"
+	"ethereum-explorer/subscriber"
 	"fmt"
 	"log"
 	"os"
@@ -20,7 +22,7 @@ var rootCmd = &cobra.Command{
   Use:   "ethereum-explorer",
   RunE: func(command *cobra.Command, args []string) error {
     cfg := config.NewConfig()
-    db, err := db.NewDB(&cfg)
+    db, err := db.NewDB(cfg)
     if err != nil {}
     defer db.Close()
 
@@ -28,7 +30,13 @@ var rootCmd = &cobra.Command{
 
     timeout := time.Duration(1) * time.Second
 
-    sv := server.NewServer(&cfg, db, gin, timeout)
+    ethClient := ethClient.NewEthClient(cfg)
+
+	  sub := subscriber.NewSubscriber(ethClient)
+
+    go sub.ProcessSubscribe(ethClient)
+
+    sv := server.NewServer(db, cfg, gin, ethClient, sub, timeout)
     
     routes.Setup(&sv)
 
@@ -51,6 +59,7 @@ func init() {
   rootCmd.Flags().String("dbpassword", "1234", "server ip address")
   rootCmd.Flags().String("dbname", "testdb", "server ip address")
   rootCmd.Flags().StringVar(&verbosity, "verbosity", "info", "Verbosity Level [debug, info, warn, error]")
+  rootCmd.Flags().String("chainUrl", "http://localhost:8545", "Chain Url")
 
   if err := viper.BindPFlags(rootCmd.Flags()); err != nil {
 		log.Fatal(err)

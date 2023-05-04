@@ -7,6 +7,7 @@ import (
 )
 
 type Config struct {
+	ChainUrl string `mapstructure:"chainUrl"`
 	Host string `mapstructure:"host"`
 	Port string `mapstructure:"port"`
 	DBHost string `mapstructure:"dbhost"`
@@ -16,10 +17,10 @@ type Config struct {
 	DBName string `mapstructure:"dbname"`
 }
 
-func NewConfig() Config {
+func NewConfig() *Config {
 	var cfg Config
 	if err := viper.Unmarshal(&cfg); err != nil {
 		log.Fatal(err)
 	}
-	return cfg
+	return &cfg
 }
