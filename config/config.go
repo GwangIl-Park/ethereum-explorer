@@ -7,14 +7,10 @@ import (
 )
 
 type Config struct {
-	ChainUrl string `mapstructure:"chainUrl"`
-	Host string `mapstructure:"host"`
-	Port string `mapstructure:"port"`
-	DBHost string `mapstructure:"dbhost"`
-	DBPort string `mapstructure:"dbport"`
-	DBUser string `mapstructure:"dbuser"`
-	DBPassword string `mapstructure:"dbpassword"`
-	DBName string `mapstructure:"dbname"`
+	ChainUrl 		string `mapstructure:"chainUrl"`
+	Host 				string `mapstructure:"host"`
+	Port 				string `mapstructure:"port"`
+	MongoUri		string `mapstructure:"mongoUri"`
 }
 
 func NewConfig() *Config {

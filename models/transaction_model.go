@@ -13,14 +13,12 @@ type Transaction struct {
 }
 
 type TransactionRepository interface{
-	CreateTransaction(c context.Context, transaction *Transaction) error
 	GetTransactions(c context.Context) ([]Transaction, error)
 	GetTransactionByHash(c context.Context, hash string) (Transaction, error)
 	GetTransactionsByAccount(c context.Context, account string) ([]Transaction, error)
 }
 
 type TransactionUsecase interface{
-	CreateTransaction(c context.Context, transaction *Transaction) error
 	GetTransactions(c context.Context) ([]Transaction, error)
 	GetTransactionByHash(c context.Context, hash string) (Transaction, error)
 	GetTransactionsByAccount(c context.Context, account string) ([]Transaction, error)

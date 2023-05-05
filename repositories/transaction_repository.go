@@ -18,12 +18,6 @@ func NewTransactionRepository(db *sql.DB) models.TransactionRepository {
 	}
 }
 
-func (tr *transactionRepository) CreateTransaction(c context.Context, transaction *models.Transaction) error {
-	tr.db.QueryRow("Insert into transactions (id, hash, blockHeight, from, to, value, txFee) values (?, ?, ?, ?, ?, ?, ?)", transaction.Id, transaction.Hash, transaction.BlockHeight, transaction.From, transaction.To, transaction.Value, transaction.TxFee)
-
-	return nil
-}
-
 func (tr *transactionRepository) GetTransactions(c context.Context) ([]models.Transaction, error) {
 	rows, err := tr.db.Query("SELECT * FROM transactions")
 	if err != nil {

@@ -18,12 +18,6 @@ func NewTransactionUsecase(transactionRepository models.TransactionRepository, t
 	}
 }
 
-func (tu *transactionUsecase) CreateTransaction(c context.Context, transaction *models.Transaction) error {
-	ctx, cancel := context.WithTimeout(c, tu.contextTimeout)
-	defer cancel()
-	return tu.transactionRepository.CreateTransaction(ctx, transaction)
-}
-
 func (tu *transactionUsecase) GetTransactions(c context.Context) ([]models.Transaction, error) {
 	ctx, cancel := context.WithTimeout(c, tu.contextTimeout)
 	defer cancel()

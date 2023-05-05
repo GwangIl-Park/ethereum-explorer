@@ -18,12 +18,6 @@ func NewBlockUsecase(blockRepository models.BlockRepository, timeout time.Durati
 	}
 }
 
-func (bu *blockUsecase) CreateBlock(c context.Context, block *models.Block) error {
-	ctx, cancel := context.WithTimeout(c, bu.contextTimeout)
-	defer cancel()
-	return bu.blockRepository.CreateBlock(ctx, block)
-}
-
 func (bu *blockUsecase) GetBlocks(c context.Context) ([]models.Block, error) {
 	ctx, cancel := context.WithTimeout(c, bu.contextTimeout)
 	defer cancel()

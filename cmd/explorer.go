@@ -1,9 +1,11 @@
 package cmd
 
 import (
+	"context"
 	"ethereum-explorer/config"
 	"ethereum-explorer/db"
 	"ethereum-explorer/ethClient"
+	"ethereum-explorer/logger"
 	"ethereum-explorer/routes"
 	"ethereum-explorer/subscriber"
 	"fmt"
@@ -18,13 +20,19 @@ import (
 	"github.com/spf13/viper"
 )
 
+var (
+	verbosity string
+)
+
 var rootCmd = &cobra.Command{
   Use:   "ethereum-explorer",
   RunE: func(command *cobra.Command, args []string) error {
+    err := logger.NewLogger(verbosity)
+
     cfg := config.NewConfig()
-    db, err := db.NewDB(cfg)
+
+    db, err := db.NewDB(context.Background(), cfg.MongoUri, "explorer", []string{"blocks", "transactions"})
     if err != nil {}
-    defer db.Close()
 
     gin := gin.Default()
 
@@ -46,20 +54,12 @@ var rootCmd = &cobra.Command{
   },
 }
 
-var (
-	verbosity string
-)
-
 func init() {
   rootCmd.Flags().String("host", "0.0.0.0", "server ip address")
   rootCmd.Flags().String("port", "5000", "server port")
-  rootCmd.Flags().String("dbhost", "127.0.0.1", "db ip address")
-  rootCmd.Flags().String("dbport", "3306", "db port")
-  rootCmd.Flags().String("dbuser", "test_user", "server ip address")
-  rootCmd.Flags().String("dbpassword", "1234", "server ip address")
-  rootCmd.Flags().String("dbname", "testdb", "server ip address")
-  rootCmd.Flags().StringVar(&verbosity, "verbosity", "info", "Verbosity Level [debug, info, warn, error]")
   rootCmd.Flags().String("chainUrl", "http://localhost:8545", "Chain Url")
+  rootCmd.Flags().String("mongoUri", "mongodb://localhost:27017", "Mongo DB URI")
+  rootCmd.Flags().StringVar(&verbosity, "verbosity", "info", "Verbosity Level [debug, info, warn, error]")
 
   if err := viper.BindPFlags(rootCmd.Flags()); err != nil {
 		log.Fatal(err)
