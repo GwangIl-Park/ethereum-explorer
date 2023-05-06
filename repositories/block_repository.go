@@ -18,10 +18,12 @@ func NewBlockRepository(db *db.DB) models.BlockRepository {
 }
 
 func (br *blockRepository) GetBlocks(c context.Context) ([]models.Block, error) {
-	documents := br.db.ReadDocument("blocks", "", "")
+	documents, err := br.db.ReadDocuments("blocks", "", "")
+	if err != nil {
+		return nil, err
+	}
 
 	var blocks []models.Block
-
 	for _, document := range documents {
 		blocks = append(blocks, document.(models.Block))
 	}
@@ -30,9 +32,9 @@ func (br *blockRepository) GetBlocks(c context.Context) ([]models.Block, error) 
 }
 
 func (br *blockRepository) GetBlockByHeight(c context.Context, height string) (models.Block, error) {
-	documents := br.db.ReadDocument("blocks", "height", height)
+	document := br.db.ReadDocument("blocks", "height", height)
 
-	block := documents[0].(models.Block)
+	block := document.(models.Block)
 	
 	return block, nil
 }

@@ -27,22 +27,17 @@ func NewDB(ctx context.Context, mongoUri string, dbName string, colNames []strin
 		"uri": mongoUri,
 	}).Info("Connecting Mongo DB")
 
-	// MongoDB 연결
 	client, err := mongo.Connect(ctx, clientOptions)
-
 	if err != nil {
-		logger.Logger.WithError(err).Error("Mongo DB Connect Error")
 		return nil, err
 	}
 
 	err = client.Ping(ctx, nil)
-
 	if err != nil {
-		logger.Logger.WithError(err).Error("Mongo DB Ping Error")
 		return nil, err
 	}
 
-	var collections map[string]*mongo.Collection
+	collections := make(map[string]*mongo.Collection)
 
 	for _, colName := range colNames {
 		collections[colName] = client.Database(dbName).Collection(colName)
@@ -53,31 +48,49 @@ func NewDB(ctx context.Context, mongoUri string, dbName string, colNames []strin
 
 func (db *DB) InsertOneDocument(colName string, document Document) error {
 	_, err := db.Collections[colName].InsertOne(context.TODO(), document)
-	if err != nil {}
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
 func (db *DB) InsertManyDocument(colName string, documents Documents) error {
 	_, err := db.Collections[colName].InsertMany(context.TODO(), documents)
-	if err != nil {}
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
-func (db *DB) ReadDocument(colName string, keyName string, key string) Documents {
+func (db *DB) ReadDocument(colName string, keyName string, key string) Document {
+	filter := bson.M{keyName:key}
+
+	document := db.Collections[colName].FindOne(context.Background(), filter)
+
+	return document
+}
+
+func (db *DB) ReadDocuments(colName string, keyName string, key string) (Documents, error) {
 	filter := bson.M{keyName:key}
 
 	cur, err := db.Collections[colName].Find(context.Background(), filter)
+	if err != nil {
+		return nil, err
+	}
 
 	var documents Documents
-
-	if err != nil {}
 
 	for cur.Next(context.Background()) {
 		var document Document
 		err := cur.Decode(&document)
-		if err != nil {}
+		if err != nil {
+			return nil, err
+		}
+
 		documents = append(documents, document)
 	}
 
-	return documents
+	return documents, nil
 }

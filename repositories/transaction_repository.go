@@ -19,10 +19,12 @@ func NewTransactionRepository(db *db.DB) models.TransactionRepository {
 }
 
 func (tr *transactionRepository) GetTransactions(c context.Context) ([]models.Transaction, error) {
-	documents := tr.db.ReadDocument("transactions", "", "")
+	documents, err := tr.db.ReadDocuments("transactions", "", "")
+	if err != nil {
+		return nil, err
+	}
 
 	var transactions []models.Transaction
-
 	for _, document := range documents {
 		transactions = append(transactions, document.(models.Transaction))
 	}
@@ -31,18 +33,20 @@ func (tr *transactionRepository) GetTransactions(c context.Context) ([]models.Tr
 }
 
 func (tr *transactionRepository) GetTransactionByHash(c context.Context, hashParam string) (models.Transaction, error) {
-	documents := tr.db.ReadDocument("transactions", "hash", hashParam)
+	document := tr.db.ReadDocument("transactions", "hash", hashParam)
 
-	transaction := documents[0].(models.Transaction)
+	transaction := document.(models.Transaction)
 	
 	return transaction, nil
 }
 
 func (tr *transactionRepository) GetTransactionsByAccount(c context.Context, account string) ([]models.Transaction, error) {
-	documents := tr.db.ReadDocument("transactions", "account", account)
+	documents, err := tr.db.ReadDocuments("transactions", "account", account)
+	if err != nil {
+		return nil, err
+	}
 
 	var transactions []models.Transaction
-
 	for _, document := range documents {
 		transactions = append(transactions, document.(models.Transaction))
 	}

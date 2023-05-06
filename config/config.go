@@ -1,22 +1,21 @@
 package config
 
 import (
-	"log"
-
 	"github.com/spf13/viper"
 )
 
 type Config struct {
-	ChainUrl 		string `mapstructure:"chainUrl"`
 	Host 				string `mapstructure:"host"`
 	Port 				string `mapstructure:"port"`
+	ChainUrl 		string `mapstructure:"chainUrl"`
 	MongoUri		string `mapstructure:"mongoUri"`
+	StartBlock	int64 `mapstructure:"startBlock"`
 }
 
-func NewConfig() *Config {
+func NewConfig() (*Config, error) {
 	var cfg Config
 	if err := viper.Unmarshal(&cfg); err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
-	return &cfg
+	return &cfg, nil
 }

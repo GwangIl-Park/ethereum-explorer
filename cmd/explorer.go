@@ -29,11 +29,22 @@ var rootCmd = &cobra.Command{
   Use:   "ethereum-explorer",
   RunE: func(command *cobra.Command, args []string) error {
     err := logger.NewLogger(verbosity)
+    if err != nil {
+      logger.Logger.WithError(err).Error("NewLogger Error")
+      return err
+    }
 
-    cfg := config.NewConfig()
+    cfg, err := config.NewConfig()
+    if err != nil {
+      logger.Logger.WithError(err).Error("NewConfig Error")
+      return err
+    }
 
     db, err := db.NewDB(context.Background(), cfg.MongoUri, "explorer", []string{"blocks", "transactions"})
-    if err != nil {}
+    if err != nil {
+      logger.Logger.WithError(err).Error("NewDB Error")
+      return err
+    }
 
     gin := gin.Default()
 
@@ -41,11 +52,15 @@ var rootCmd = &cobra.Command{
 
     ethClient := ethClient.NewEthClient(cfg)
 
-	  sub, initBlock := subscriber.NewSubscriber(ethClient, db)
+	  sub, initBlock, err := subscriber.NewSubscriber(ethClient, db)
+    if err != nil {
+      logger.Logger.WithError(err).Error("NewSubscriber Error")
+      return err
+    }
 
     go sub.ProcessSubscribe(ethClient, db)
 
-    go sub.ProcessPrevious(ethClient, db, big.NewInt(0), initBlock)
+    go sub.ProcessPrevious(ethClient, db, big.NewInt(cfg.StartBlock), initBlock)
 
     sv := server.NewServer(db, cfg, gin, ethClient, sub, timeout)
     
@@ -62,6 +77,7 @@ func init() {
   rootCmd.Flags().String("port", "5000", "server port")
   rootCmd.Flags().String("chainUrl", "http://localhost:8545", "Chain Url")
   rootCmd.Flags().String("mongoUri", "mongodb://localhost:27017", "Mongo DB URI")
+  rootCmd.Flags().Int64("startBlock", 0, "explorer start block")
   rootCmd.Flags().StringVar(&verbosity, "verbosity", "info", "Verbosity Level [debug, info, warn, error]")
 
   if err := viper.BindPFlags(rootCmd.Flags()); err != nil {
