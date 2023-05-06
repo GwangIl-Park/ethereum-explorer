@@ -10,6 +10,7 @@ import (
 	"ethereum-explorer/subscriber"
 	"fmt"
 	"log"
+	"math/big"
 	"os"
 	"time"
 
@@ -40,9 +41,11 @@ var rootCmd = &cobra.Command{
 
     ethClient := ethClient.NewEthClient(cfg)
 
-	  sub := subscriber.NewSubscriber(ethClient)
+	  sub, initBlock := subscriber.NewSubscriber(ethClient, db)
 
     go sub.ProcessSubscribe(ethClient, db)
+
+    go sub.ProcessPrevious(ethClient, db, big.NewInt(0), initBlock)
 
     sv := server.NewServer(db, cfg, gin, ethClient, sub, timeout)
     

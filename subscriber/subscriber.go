@@ -2,85 +2,95 @@ package subscriber
 
 import (
 	"context"
-	"ethereum-explorer/db"
+	dbPackage "ethereum-explorer/db"
 	"ethereum-explorer/ethClient"
 	"ethereum-explorer/models"
 	"fmt"
-	"log"
+	"math/big"
 	"strconv"
 
 	"github.com/ethereum/go-ethereum"
+	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/types"
 )
+
+func insertDocument(block *types.Block, db *dbPackage.DB) {
+		err := db.InsertOneDocument("blocks", 
+			models.Block{
+				BlockHeight:block.Number().String(),
+				Receipient:block.Coinbase().String(),
+				Reward:block.BaseFee().String(),
+				Size:strconv.FormatUint(block.Size(), 10),
+				GasUsed:strconv.FormatUint(block.GasUsed(), 10),
+				Hash:block.Hash().String(),
+			})
+		if err != nil{}
+		
+		transactions := block.Transactions()
+
+		var documents dbPackage.Documents
+
+		for _, transaction := range transactions {
+			msg, err := core.TransactionToMessage(transaction, types.LatestSignerForChainID(transaction.ChainId()), nil)
+			if err != nil {}
+			documents = append(documents,
+				models.Transaction{
+					Hash:transaction.Hash().String(),
+					BlockHeight:block.Number().String(),
+					From:msg.From.String(),
+					To:transaction.To().String(),
+					Value:transaction.Value().String(),
+					TxFee:transaction.Cost().String(),
+			})
+		}
+		
+		err = db.InsertManyDocument("transactions", documents)
+		if err != nil {}
+}
 
 type Subscriber struct {
 	sub ethereum.Subscription
 	header chan *types.Header
 }
 
-func NewSubscriber(ethClient *ethClient.EthClient) *Subscriber {
+func NewSubscriber(ethClient *ethClient.EthClient, db *dbPackage.DB) (*Subscriber, *big.Int) {
 	headers := make(chan *types.Header)
 	sub, err := ethClient.Eth.SubscribeNewHead(context.Background(), headers)
 	if err != nil {
 
 	}
+
+	header := <-headers
+	block, err := ethClient.Eth.BlockByHash(context.Background(), header.Hash())
+	if err != nil {
+	}
+	go insertDocument(block, db)
 	return &Subscriber{
 		sub,
 		headers,
-	}
+	}, block.Number()
 }
 
-func (sub *Subscriber) ProcessSubscribe(ethClient *ethClient.EthClient, database *db.DB) {
+func (sub *Subscriber) ProcessSubscribe(ethClient *ethClient.EthClient, db *dbPackage.DB) {
 	for {
 		select {
 		case header:= <-sub.header:
 			block, err := ethClient.Eth.BlockByHash(context.Background(), header.Hash())
 			if err != nil {
 			}
-			go func() {
-				err := database.InsertOneDocument("blocks", 
-					models.Block{
-						block.Number().String(),
-						block.Coinbase().String(),
-						block.BaseFee().String(),
-						strconv.FormatUint(block.Size(), 10),
-						strconv.FormatUint(block.GasUsed(), 10),
-						block.Hash().String(),
-					})
-				if err != nil{}
-				
-				transactions := block.Transactions()
-
-				var documents db.Documents
-
-				chainID, err := ethClient.NetworkID(context.Background())
-        if err != nil {
-            log.Fatal(err)
-        }
-
-        if msg, err := tx.AsMessage(types.NewEIP155Signer(chainID)); err == nil {
-            fmt.Println(msg.From().Hex()) // 0x0fD081e3Bb178dc45c0cb23202069ddA57064258
-        }
-
-				for _, transaction := range transactions {
-					documents = append(documents,
-						models.Transaction{
-							transaction.Hash().String(),
-							block.Number().String(),
-							transaction.
-							transaction.To().String(),
-							transaction.Value().String(),
-							transaction.Value(),
-					})
-				}
-				
-				err = database.InsertManyDocument("transactions", documents)
-				if err != nil {}
-
-			}()
-			return
+			go insertDocument(block, db)
 		case err := <-sub.sub.Err():
+			fmt.Println(err)
 			return
 		}
+	}
+}
+
+func (sub *Subscriber) ProcessPrevious(ethClient *ethClient.EthClient, db *dbPackage.DB, start *big.Int, initBlock *big.Int) {
+	one := big.NewInt(1)
+	for i := start; i.Cmp(initBlock) > 0; i.Add(i, one) {
+		block, err := ethClient.Eth.BlockByNumber(context.Background(), i)
+		if err != nil {}
+		insertDocument(block, db)
 	}
 }
