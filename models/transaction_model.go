@@ -3,13 +3,12 @@ package models
 import "context"
 
 type Transaction struct {
-	Id int `json:"id"`
 	Hash string `json:"hash"`
-	BlockHeight int `json:"blockHeight"`
+	BlockHeight string `json:"blockHeight"`
 	From string `json:"from"`
 	To string `json:"to"`
-	Value float32 `json:"value"`
-	TxFee float32 `json:"txFee"`
+	Value string `json:"value"`
+	TxFee string `json:"txFee"`
 }
 
 type TransactionRepository interface{

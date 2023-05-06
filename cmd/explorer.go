@@ -42,7 +42,7 @@ var rootCmd = &cobra.Command{
 
 	  sub := subscriber.NewSubscriber(ethClient)
 
-    go sub.ProcessSubscribe(ethClient)
+    go sub.ProcessSubscribe(ethClient, db)
 
     sv := server.NewServer(db, cfg, gin, ethClient, sub, timeout)
     

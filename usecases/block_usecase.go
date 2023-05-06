@@ -24,7 +24,7 @@ func (bu *blockUsecase) GetBlocks(c context.Context) ([]models.Block, error) {
 	return bu.blockRepository.GetBlocks(ctx)
 }
 
-func (bu *blockUsecase) GetBlockByHeight(c context.Context, height uint) (models.Block, error) {
+func (bu *blockUsecase) GetBlockByHeight(c context.Context, height string) (models.Block, error) {
 	ctx, cancel := context.WithTimeout(c, bu.contextTimeout)
 	defer cancel()
 	return bu.blockRepository.GetBlockByHeight(ctx, height)

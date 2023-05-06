@@ -3,7 +3,6 @@ package controller
 import (
 	"ethereum-explorer/models"
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -32,8 +31,7 @@ func (bc *BlockController) GetBlocks(c *gin.Context) {
 }
 
 func (bc *BlockController) GetBlockByHeight(c *gin.Context) {
-	height, _ := strconv.ParseUint(c.Param("height"), 10, 64)
-	block, err := bc.BlockUsecase.GetBlockByHeight(c, uint(height))
+	block, err := bc.BlockUsecase.GetBlockByHeight(c, c.Param("height"))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, models.ErrorResponse{Message: err.Error()})
 		return

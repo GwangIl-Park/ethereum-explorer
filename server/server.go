@@ -2,17 +2,17 @@ package server
 
 import (
 	"ethereum-explorer/config"
+	"ethereum-explorer/db"
 	"ethereum-explorer/ethClient"
 	"ethereum-explorer/subscriber"
 	"fmt"
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type Server struct {
-	Db *mongo.Client
+	Db *db.DB
 	Config *config.Config
 	Gin *gin.Engine
 	EthClient *ethClient.EthClient
@@ -20,7 +20,7 @@ type Server struct {
 	Timeout time.Duration
 }
 
-func NewServer(db *mongo.Client, cfg *config.Config, gin *gin.Engine, ethClient *ethClient.EthClient, sub *subscriber.Subscriber, timeout time.Duration) Server {
+func NewServer(db *db.DB, cfg *config.Config, gin *gin.Engine, ethClient *ethClient.EthClient, sub *subscriber.Subscriber, timeout time.Duration) Server {
 	return Server{
 		db,
 		cfg,

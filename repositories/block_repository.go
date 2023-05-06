@@ -18,17 +18,21 @@ func NewBlockRepository(db *db.DB) models.BlockRepository {
 }
 
 func (br *blockRepository) GetBlocks(c context.Context) ([]models.Block, error) {
-	blocks, err := db.DB.ReadDocument("block", "", "")
-	if err != nil {
-		return nil, err
+	documents := br.db.ReadDocument("blocks", "", "")
+
+	var blocks []models.Block
+
+	for _, document := range documents {
+		blocks = append(blocks, document.(models.Block))
 	}
+	
 	return blocks, nil
 }
 
-func (br *blockRepository) GetBlockByHeight(c context.Context, height uint) (models.Block, error) {
-	blocks, err := db.DB.ReadDocument("block", "height", height)
-	if err != nil {
-		return nil, err
-	}
-	return blocks, nil
+func (br *blockRepository) GetBlockByHeight(c context.Context, height string) (models.Block, error) {
+	documents := br.db.ReadDocument("blocks", "height", height)
+
+	block := documents[0].(models.Block)
+	
+	return block, nil
 }

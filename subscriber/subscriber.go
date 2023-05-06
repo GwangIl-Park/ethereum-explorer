@@ -2,7 +2,12 @@ package subscriber
 
 import (
 	"context"
+	"ethereum-explorer/db"
 	"ethereum-explorer/ethClient"
+	"ethereum-explorer/models"
+	"fmt"
+	"log"
+	"strconv"
 
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -25,7 +30,7 @@ func NewSubscriber(ethClient *ethClient.EthClient) *Subscriber {
 	}
 }
 
-func (sub *Subscriber) ProcessSubscribe(ethClient *ethClient.EthClient) {
+func (sub *Subscriber) ProcessSubscribe(ethClient *ethClient.EthClient, database *db.DB) {
 	for {
 		select {
 		case header:= <-sub.header:
@@ -33,18 +38,46 @@ func (sub *Subscriber) ProcessSubscribe(ethClient *ethClient.EthClient) {
 			if err != nil {
 			}
 			go func() {
-				db.QueryRow(
-					"Insert into blocks (blockHeight, receipient, reward, size, gasUsed, hash) values ( ? ? ? ? ? ? )", 
-					block.Number(),
-					block.Coinbase(),
-					block.Coinbase(),
-					block.Size(),
-					block.GasUsed(),
-					block.Hash(),
-				)
-			}
-			
-			tr.db.QueryRow("Insert into transactions (id, hash, blockHeight, from, to, value, txFee) values (?, ?, ?, ?, ?, ?, ?)", transaction.Id, transaction.Hash, transaction.BlockHeight, transaction.From, transaction.To, transaction.Value, transaction.TxFee)
+				err := database.InsertOneDocument("blocks", 
+					models.Block{
+						block.Number().String(),
+						block.Coinbase().String(),
+						block.BaseFee().String(),
+						strconv.FormatUint(block.Size(), 10),
+						strconv.FormatUint(block.GasUsed(), 10),
+						block.Hash().String(),
+					})
+				if err != nil{}
+				
+				transactions := block.Transactions()
+
+				var documents db.Documents
+
+				chainID, err := ethClient.NetworkID(context.Background())
+        if err != nil {
+            log.Fatal(err)
+        }
+
+        if msg, err := tx.AsMessage(types.NewEIP155Signer(chainID)); err == nil {
+            fmt.Println(msg.From().Hex()) // 0x0fD081e3Bb178dc45c0cb23202069ddA57064258
+        }
+
+				for _, transaction := range transactions {
+					documents = append(documents,
+						models.Transaction{
+							transaction.Hash().String(),
+							block.Number().String(),
+							transaction.
+							transaction.To().String(),
+							transaction.Value().String(),
+							transaction.Value(),
+					})
+				}
+				
+				err = database.InsertManyDocument("transactions", documents)
+				if err != nil {}
+
+			}()
 			return
 		case err := <-sub.sub.Err():
 			return

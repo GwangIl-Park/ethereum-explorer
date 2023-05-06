@@ -18,6 +18,7 @@ type DB struct {
 }
 
 type Document interface{}
+type Documents []interface{}
 
 func NewDB(ctx context.Context, mongoUri string, dbName string, colNames []string) (*DB, error) {
 	clientOptions := options.Client().ApplyURI(mongoUri)
@@ -50,12 +51,24 @@ func NewDB(ctx context.Context, mongoUri string, dbName string, colNames []strin
 	return &DB{client, collections}, nil
 }
 
-func (db *DB) ReadDocument(colName string, keyName string, key string) []Document {
+func (db *DB) InsertOneDocument(colName string, document Document) error {
+	_, err := db.Collections[colName].InsertOne(context.TODO(), document)
+	if err != nil {}
+	return nil
+}
+
+func (db *DB) InsertManyDocument(colName string, documents Documents) error {
+	_, err := db.Collections[colName].InsertMany(context.TODO(), documents)
+	if err != nil {}
+	return nil
+}
+
+func (db *DB) ReadDocument(colName string, keyName string, key string) Documents {
 	filter := bson.M{keyName:key}
 
 	cur, err := db.Collections[colName].Find(context.Background(), filter)
 
-	var documents []Document
+	var documents Documents
 
 	if err != nil {}
 
