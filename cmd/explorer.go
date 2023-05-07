@@ -50,7 +50,11 @@ var rootCmd = &cobra.Command{
 
     timeout := time.Duration(1) * time.Second
 
-    ethClient := ethClient.NewEthClient(cfg)
+    ethClient, err := ethClient.NewEthClient(cfg)
+    if err != nil {
+      logger.Logger.WithError(err).Error("NewEthClient Error")
+      return err
+    }
 
 	  sub, initBlock, err := subscriber.NewSubscriber(ethClient, db)
     if err != nil {
@@ -58,15 +62,22 @@ var rootCmd = &cobra.Command{
       return err
     }
 
-    go sub.ProcessSubscribe(ethClient, db)
+    errorChan := make(chan error)
+    go sub.ProcessSubscribe(ethClient, db, errorChan)
 
-    go sub.ProcessPrevious(ethClient, db, big.NewInt(cfg.StartBlock), initBlock)
+    go sub.ProcessPrevious(ethClient, db, big.NewInt(cfg.StartBlock), initBlock, errorChan)
 
     sv := server.NewServer(db, cfg, gin, ethClient, sub, timeout)
     
     routes.Setup(&sv)
 
-    sv.Start()
+    go sv.Start(errorChan)
+
+    err = <-errorChan
+    if err != nil {
+      logger.Logger.WithError(err).Error("Error")
+      return err
+    }
 
     return nil
   },
@@ -75,7 +86,8 @@ var rootCmd = &cobra.Command{
 func init() {
   rootCmd.Flags().String("host", "0.0.0.0", "server ip address")
   rootCmd.Flags().String("port", "5000", "server port")
-  rootCmd.Flags().String("chainUrl", "http://localhost:8545", "Chain Url")
+  rootCmd.Flags().String("chainHttp", "http://localhost:8545", "Chain Http Url")
+  rootCmd.Flags().String("chainWs", "ws://localhost:8546", "Chain Websocket Url")
   rootCmd.Flags().String("mongoUri", "mongodb://localhost:27017", "Mongo DB URI")
   rootCmd.Flags().Int64("startBlock", 0, "explorer start block")
   rootCmd.Flags().StringVar(&verbosity, "verbosity", "info", "Verbosity Level [debug, info, warn, error]")

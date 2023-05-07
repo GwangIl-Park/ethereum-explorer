@@ -31,7 +31,7 @@ func NewServer(db *db.DB, cfg *config.Config, gin *gin.Engine, ethClient *ethCli
 	}
 }
 
-func (server *Server) Start() {
+func (server *Server) Start(errorChan chan error) {
 	address := fmt.Sprintf("%s:%s", server.Config.Host, server.Config.Port)
-	server.Gin.Run(address)
+	errorChan <- server.Gin.Run(address)
 }

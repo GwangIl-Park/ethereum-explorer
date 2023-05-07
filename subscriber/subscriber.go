@@ -5,6 +5,7 @@ import (
 	"errors"
 	dbPackage "ethereum-explorer/db"
 	"ethereum-explorer/ethClient"
+	"ethereum-explorer/logger"
 	"ethereum-explorer/models"
 	"fmt"
 	"math/big"
@@ -25,9 +26,11 @@ func makeBlockModel(block *types.Block) *models.Block {
 		Hash:block.Hash().String(),}
 }
 
-func makeTransactionModel(transaction *types.Transaction, height *big.Int) *models.Transaction {
+func makeTransactionModel(transaction *types.Transaction, height *big.Int) (*models.Transaction, error) {
 	msg, err := core.TransactionToMessage(transaction, types.LatestSignerForChainID(transaction.ChainId()), nil)
-	if err != nil {}
+	if err != nil {
+		return nil, err
+	}
 	return &models.Transaction{
 		Hash:transaction.Hash().String(),
 		BlockHeight:height.String(),
@@ -35,7 +38,7 @@ func makeTransactionModel(transaction *types.Transaction, height *big.Int) *mode
 		To:transaction.To().String(),
 		Value:transaction.Value().String(),
 		TxFee:transaction.Cost().String(),
-	}
+	}, nil
 }
 
 func insertDocument(block *types.Block, db *dbPackage.DB) error {
@@ -53,7 +56,11 @@ func insertDocument(block *types.Block, db *dbPackage.DB) error {
 	var documents dbPackage.Documents
 
 	for _, transaction := range transactions {
-		documents = append(documents, makeTransactionModel(transaction, block.Number()))
+		document, err := makeTransactionModel(transaction, block.Number())
+		if err != nil {
+			return err
+		}
+		documents = append(documents, document)
 	}
 	
 	err = db.InsertManyDocument("transactions", documents)
@@ -74,7 +81,11 @@ func insertPreviousDocuments(blocks []*types.Block, db *dbPackage.DB) error {
 		transactions := block.Transactions()
 
 		for _, transaction := range transactions {
-			transactionDocuments = append(transactionDocuments, makeTransactionModel(transaction, block.Number()))
+			document, err := makeTransactionModel(transaction, block.Number())
+			if err != nil {
+				return err
+			}
+			transactionDocuments = append(transactionDocuments, document)
 		}
 	}
 
@@ -98,14 +109,20 @@ type Subscriber struct {
 
 func NewSubscriber(ethClient *ethClient.EthClient, db *dbPackage.DB) (*Subscriber, *big.Int, error) {
 	headers := make(chan *types.Header)
-	sub, err := ethClient.Eth.SubscribeNewHead(context.Background(), headers)
+
+	logger.Logger.Info("Subscribe New Head")
+
+	sub, err := ethClient.Ws.SubscribeNewHead(context.Background(), headers)
 	if err != nil {
 		return nil, nil, err
 	}
 
+	logger.Logger.Info("Waiting New Block")
+
 	header := <-headers
-	block, err := ethClient.Eth.BlockByHash(context.Background(), header.Hash())
+	block, err := ethClient.Http.BlockByHash(context.Background(), header.Hash())
 	if err != nil {
+		fmt.Println("bb")
 		return nil, nil, err
 	}
 
@@ -117,27 +134,32 @@ func NewSubscriber(ethClient *ethClient.EthClient, db *dbPackage.DB) (*Subscribe
 	}, block.Number(), nil
 }
 
-func (sub *Subscriber) ProcessSubscribe(ethClient *ethClient.EthClient, db *dbPackage.DB) {
+func (sub *Subscriber) ProcessSubscribe(ethClient *ethClient.EthClient, db *dbPackage.DB, errorChan chan error) {
 	for {
 		select {
 		case header:= <-sub.header:
-			block, err := ethClient.Eth.BlockByHash(context.Background(), header.Hash())
+			block, err := ethClient.Http.BlockByHash(context.Background(), header.Hash())
 			if err != nil {
+				errorChan <- err
+				return
 			}
 			go insertDocument(block, db)
 		case err := <-sub.sub.Err():
-			fmt.Println(err)
+			errorChan <- err
 			return
 		}
 	}
 }
 
-func (sub *Subscriber) ProcessPrevious(ethClient *ethClient.EthClient, db *dbPackage.DB, start *big.Int, initBlock *big.Int) {
+func (sub *Subscriber) ProcessPrevious(ethClient *ethClient.EthClient, db *dbPackage.DB, start *big.Int, initBlock *big.Int, errorChan chan error) {
 	one := big.NewInt(1)
 	var blocks []*types.Block
 	for i := start; i.Cmp(initBlock) > 0; i.Add(i, one) {
-		block, err := ethClient.Eth.BlockByNumber(context.Background(), i)
-		if err != nil {}
+		block, err := ethClient.Http.BlockByNumber(context.Background(), i)
+		if err != nil {
+			errorChan <- err
+			return
+		}
 		blocks = append(blocks, block)
 	}
 	insertPreviousDocuments(blocks, db)

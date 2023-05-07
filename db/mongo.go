@@ -43,6 +43,10 @@ func NewDB(ctx context.Context, mongoUri string, dbName string, colNames []strin
 		collections[colName] = client.Database(dbName).Collection(colName)
 	}
 
+	logger.Logger.WithFields(log.Fields{
+		"uri": mongoUri,
+	}).Info("Mongo DB Connected")
+
 	return &DB{client, collections}, nil
 }
 
