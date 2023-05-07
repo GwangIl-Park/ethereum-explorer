@@ -42,11 +42,16 @@ func makeTransactionModel(transaction *types.Transaction, height *big.Int) (*mod
 }
 
 func insertDocument(block *types.Block, db *dbPackage.DB) error {
-	if db.ReadDocument("blocks", "height", block.Number().String()) == nil {
-		return errors.New(fmt.Errorf("Block %s already exists", block.Number().String()).Error())
+	document, err := db.ReadDocument("blocks", "height", block.Number().String())
+	if err != nil {
+		return err
+	}
+
+	if document == nil {
+		return errors.New(fmt.Errorf("block %s already exists", block.Number().String()).Error())
 	}
 	
-	err := db.InsertOneDocument("blocks", makeBlockModel(block))
+	err = db.InsertOneDocument("blocks", makeBlockModel(block))
 	if err != nil{
 		return err
 	}

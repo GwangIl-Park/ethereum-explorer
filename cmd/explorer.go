@@ -16,6 +16,7 @@ import (
 
 	server "ethereum-explorer/server"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -47,6 +48,9 @@ var rootCmd = &cobra.Command{
     }
 
     gin := gin.Default()
+    config := cors.DefaultConfig()
+    config.AllowAllOrigins = true
+    gin.Use(cors.New(config))
 
     timeout := time.Duration(1) * time.Second
 

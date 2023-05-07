@@ -32,7 +32,10 @@ func (br *blockRepository) GetBlocks(c context.Context) ([]models.Block, error) 
 }
 
 func (br *blockRepository) GetBlockByHeight(c context.Context, height string) (models.Block, error) {
-	document := br.db.ReadDocument("blocks", "height", height)
+	document, err := br.db.ReadDocument("blocks", "height", height)
+	if err != nil {
+		return models.Block{}, err
+	}
 
 	block := document.(models.Block)
 	

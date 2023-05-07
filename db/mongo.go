@@ -51,6 +51,8 @@ func NewDB(ctx context.Context, mongoUri string, dbName string, colNames []strin
 }
 
 func (db *DB) InsertOneDocument(colName string, document Document) error {
+	logger.Logger.Info("AAAAAAAAAAAA")
+
 	_, err := db.Collections[colName].InsertOne(context.TODO(), document)
 	if err != nil {
 		return err
@@ -60,6 +62,7 @@ func (db *DB) InsertOneDocument(colName string, document Document) error {
 }
 
 func (db *DB) InsertManyDocument(colName string, documents Documents) error {
+	logger.Logger.Info("BBBBBBBBBBBB")
 	_, err := db.Collections[colName].InsertMany(context.TODO(), documents)
 	if err != nil {
 		return err
@@ -68,12 +71,18 @@ func (db *DB) InsertManyDocument(colName string, documents Documents) error {
 	return nil
 }
 
-func (db *DB) ReadDocument(colName string, keyName string, key string) Document {
+func (db *DB) ReadDocument(colName string, keyName string, key string) (Document, error) {
 	filter := bson.M{keyName:key}
 
-	document := db.Collections[colName].FindOne(context.Background(), filter)
+	cur := db.Collections[colName].FindOne(context.Background(), filter)
 
-	return document
+	var document Document
+	err := cur.Decode(&document)
+	if err != nil {
+		return nil, err
+	}
+	
+	return document, nil
 }
 
 func (db *DB) ReadDocuments(colName string, keyName string, key string) (Documents, error) {

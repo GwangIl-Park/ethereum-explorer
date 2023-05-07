@@ -33,7 +33,10 @@ func (tr *transactionRepository) GetTransactions(c context.Context) ([]models.Tr
 }
 
 func (tr *transactionRepository) GetTransactionByHash(c context.Context, hashParam string) (models.Transaction, error) {
-	document := tr.db.ReadDocument("transactions", "hash", hashParam)
+	document, err := tr.db.ReadDocument("transactions", "hash", hashParam)
+	if err != nil {
+		return models.Transaction{}, err
+	}
 
 	transaction := document.(models.Transaction)
 	
