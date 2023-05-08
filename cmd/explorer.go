@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"log"
 	"math/big"
+	"net/http"
 	"os"
 	"time"
 
@@ -48,9 +49,13 @@ var rootCmd = &cobra.Command{
     }
 
     gin := gin.Default()
-    config := cors.DefaultConfig()
-    config.AllowAllOrigins = true
-    gin.Use(cors.New(config))
+    gin.Use(cors.New(cors.Config{
+      AllowOrigins:     []string{"http://localhost:3000"},
+      AllowMethods:     []string{http.MethodGet},
+      AllowHeaders:     []string{"Content-Type", "X-XSRF-TOKEN", "Accept", "Origin", "X-Requested-With", "Authorization"},
+      ExposeHeaders:    []string{"Content-Length"},
+      AllowCredentials: true,
+  }))
 
     timeout := time.Duration(1) * time.Second
 
@@ -60,16 +65,17 @@ var rootCmd = &cobra.Command{
       return err
     }
 
-	  sub, initBlock, err := subscriber.NewSubscriber(ethClient, db)
+    errorChan := make(chan error)
+
+	  sub, initBlock, err := subscriber.NewSubscriber(ethClient, db, errorChan)
     if err != nil {
       logger.Logger.WithError(err).Error("NewSubscriber Error")
       return err
     }
 
-    errorChan := make(chan error)
-    go sub.ProcessSubscribe(ethClient, db, errorChan)
+    go sub.ProcessSubscribe(ethClient, db)
 
-    go sub.ProcessPrevious(ethClient, db, big.NewInt(cfg.StartBlock), initBlock, errorChan)
+    go sub.ProcessPrevious(ethClient, db, big.NewInt(cfg.StartBlock), initBlock)
 
     sv := server.NewServer(db, cfg, gin, ethClient, sub, timeout)
     

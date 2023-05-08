@@ -24,15 +24,15 @@ export const Block = () => {
       console.log(response);
       const data = response.data;
       setBlock({
-        BlockHeight: data.BlockHeight,
-        Receipient: data.Receipient,
-        Reward: data.Reward,
-        Size: data.Size,
-        GasUsed: data.GasUsed,
-        Hash: data.Hash,
+        BlockHeight: data.blockHeight,
+        Receipient: data.receipient,
+        Reward: data.reward,
+        Size: data.size,
+        GasUsed: data.gasUsed,
+        Hash: data.hash,
       });
     });
-  });
+  }, []);
 
   return (
     <div className="page-block">

@@ -4,6 +4,8 @@ import (
 	"context"
 	"ethereum-explorer/db"
 	"ethereum-explorer/models"
+
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 
@@ -19,40 +21,40 @@ func NewTransactionRepository(db *db.DB) models.TransactionRepository {
 }
 
 func (tr *transactionRepository) GetTransactions(c context.Context) ([]models.Transaction, error) {
-	documents, err := tr.db.ReadDocuments("transactions", "", "")
+	cursor, err := tr.db.Collections["transactions"].Find(c, bson.M{})
 	if err != nil {
 		return nil, err
 	}
 
 	var transactions []models.Transaction
-	for _, document := range documents {
-		transactions = append(transactions, document.(models.Transaction))
+	if err := cursor.All(c, &transactions); err != nil {
+		return nil, err
 	}
-	
+
 	return transactions, nil
 }
 
 func (tr *transactionRepository) GetTransactionByHash(c context.Context, hashParam string) (models.Transaction, error) {
-	document, err := tr.db.ReadDocument("transactions", "hash", hashParam)
-	if err != nil {
+	cursor := tr.db.Collections["transactions"].FindOne(c, bson.M{"hash":hashParam})
+	
+	var transaction models.Transaction
+	if err := cursor.Decode(&transaction); err != nil {
 		return models.Transaction{}, err
 	}
-
-	transaction := document.(models.Transaction)
 	
 	return transaction, nil
 }
 
 func (tr *transactionRepository) GetTransactionsByAccount(c context.Context, account string) ([]models.Transaction, error) {
-	documents, err := tr.db.ReadDocuments("transactions", "account", account)
+	cursor, err := tr.db.Collections["transactions"].Find(c, bson.M{"account":account})
 	if err != nil {
 		return nil, err
 	}
 
 	var transactions []models.Transaction
-	for _, document := range documents {
-		transactions = append(transactions, document.(models.Transaction))
+	if err := cursor.All(c, &transactions); err != nil {
+		return nil, err
 	}
-	
+
 	return transactions, nil
 }

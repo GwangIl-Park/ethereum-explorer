@@ -3,7 +3,6 @@ package db
 import (
 	"context"
 
-	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
@@ -22,7 +21,7 @@ type Documents []interface{}
 
 func NewDB(ctx context.Context, mongoUri string, dbName string, colNames []string) (*DB, error) {
 	clientOptions := options.Client().ApplyURI(mongoUri)
-
+	
 	logger.Logger.WithFields(log.Fields{
 		"uri": mongoUri,
 	}).Info("Connecting Mongo DB")
@@ -51,8 +50,6 @@ func NewDB(ctx context.Context, mongoUri string, dbName string, colNames []strin
 }
 
 func (db *DB) InsertOneDocument(colName string, document Document) error {
-	logger.Logger.Info("AAAAAAAAAAAA")
-
 	_, err := db.Collections[colName].InsertOne(context.TODO(), document)
 	if err != nil {
 		return err
@@ -62,48 +59,10 @@ func (db *DB) InsertOneDocument(colName string, document Document) error {
 }
 
 func (db *DB) InsertManyDocument(colName string, documents Documents) error {
-	logger.Logger.Info("BBBBBBBBBBBB")
 	_, err := db.Collections[colName].InsertMany(context.TODO(), documents)
 	if err != nil {
 		return err
 	}
 
 	return nil
-}
-
-func (db *DB) ReadDocument(colName string, keyName string, key string) (Document, error) {
-	filter := bson.M{keyName:key}
-
-	cur := db.Collections[colName].FindOne(context.Background(), filter)
-
-	var document Document
-	err := cur.Decode(&document)
-	if err != nil {
-		return nil, err
-	}
-	
-	return document, nil
-}
-
-func (db *DB) ReadDocuments(colName string, keyName string, key string) (Documents, error) {
-	filter := bson.M{keyName:key}
-
-	cur, err := db.Collections[colName].Find(context.Background(), filter)
-	if err != nil {
-		return nil, err
-	}
-
-	var documents Documents
-
-	for cur.Next(context.Background()) {
-		var document Document
-		err := cur.Decode(&document)
-		if err != nil {
-			return nil, err
-		}
-
-		documents = append(documents, document)
-	}
-
-	return documents, nil
 }
