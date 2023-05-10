@@ -6,6 +6,7 @@ import (
 	"ethereum-explorer/models"
 
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 
@@ -20,8 +21,9 @@ func NewTransactionRepository(db *db.DB) models.TransactionRepository {
 	}
 }
 
-func (tr *transactionRepository) GetTransactions(c context.Context) ([]models.Transaction, error) {
-	cursor, err := tr.db.Collections["transactions"].Find(c, bson.M{})
+func (tr *transactionRepository) GetTransactions(c context.Context, page int64, show int64) ([]models.Transaction, error) {
+	opts := options.Find().SetSort(bson.D{{Key: "blockheight",Value: -1}}).SetSkip((page-1) * show).SetLimit(show)
+	cursor, err := tr.db.Collections["transactions"].Find(c, bson.M{}, opts)
 	if err != nil {
 		return nil, err
 	}

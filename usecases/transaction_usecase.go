@@ -3,7 +3,10 @@ package usecases
 import (
 	"context"
 	"ethereum-explorer/models"
+	"strconv"
 	"time"
+
+	"github.com/gin-gonic/gin"
 )
 
 type transactionUsecase struct {
@@ -18,10 +21,19 @@ func NewTransactionUsecase(transactionRepository models.TransactionRepository, t
 	}
 }
 
-func (tu *transactionUsecase) GetTransactions(c context.Context) ([]models.Transaction, error) {
+func (tu *transactionUsecase) GetTransactions(c *gin.Context) ([]models.Transaction, error) {
+	page, err := strconv.Atoi(c.DefaultQuery("page", "1"))
+	if err != nil {
+		return nil, err
+	}
+	show, err := strconv.Atoi(c.DefaultQuery("show", "10"))
+	if err != nil {
+		return nil, err
+	}
+
 	ctx, cancel := context.WithTimeout(c, tu.contextTimeout)
 	defer cancel()
-	return tu.transactionRepository.GetTransactions(ctx)
+	return tu.transactionRepository.GetTransactions(ctx, int64(page), int64(show))
 }
 
 func (tu *transactionUsecase) GetTransactionByHash(c context.Context, hash string) (models.Transaction, error) {

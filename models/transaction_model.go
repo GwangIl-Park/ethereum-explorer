@@ -1,6 +1,10 @@
 package models
 
-import "context"
+import (
+	"context"
+
+	"github.com/gin-gonic/gin"
+)
 
 type Transaction struct {
 	Hash string `json:"hash"`
@@ -12,13 +16,13 @@ type Transaction struct {
 }
 
 type TransactionRepository interface{
-	GetTransactions(c context.Context) ([]Transaction, error)
+	GetTransactions(c context.Context, page int64, show int64) ([]Transaction, error)
 	GetTransactionByHash(c context.Context, hash string) (Transaction, error)
 	GetTransactionsByAccount(c context.Context, account string) ([]Transaction, error)
 }
 
 type TransactionUsecase interface{
-	GetTransactions(c context.Context) ([]Transaction, error)
+	GetTransactions(c *gin.Context) ([]Transaction, error)
 	GetTransactionByHash(c context.Context, hash string) (Transaction, error)
 	GetTransactionsByAccount(c context.Context, account string) ([]Transaction, error)
 }

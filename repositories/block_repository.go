@@ -7,6 +7,7 @@ import (
 	"ethereum-explorer/db"
 
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type blockRepository struct {
@@ -19,8 +20,9 @@ func NewBlockRepository(db *db.DB) models.BlockRepository {
 	}
 }
 
-func (br *blockRepository) GetBlocks(c context.Context) ([]models.Block, error) {
-	cursor, err := br.db.Collections["blocks"].Find(c, bson.M{})
+func (br *blockRepository) GetBlocks(c context.Context, page int64, show int64) ([]models.Block, error) {
+	opts := options.Find().SetSort(bson.D{{Key: "blockheight",Value: -1}}).SetSkip((page-1) * show).SetLimit(show)
+	cursor, err := br.db.Collections["blocks"].Find(c, bson.M{}, opts)
 	if err != nil {
 		return nil, err
 	}
