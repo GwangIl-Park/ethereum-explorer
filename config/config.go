@@ -12,8 +12,12 @@ type Config struct {
 	Port 				string `mapstructure:"port"`
 	ChainHttp 		string `mapstructure:"chainHttp"`
 	ChainWs 		string `mapstructure:"chainWs"`
-	MongoUri		string `mapstructure:"mongoUri"`
-	StartBlock	int64 `mapstructure:"startBlock"`
+	DbHost string `mapstructure:"dbHost"`
+	DbPort int32 `mapstructure:"dbPort"`
+	DbUser string `mapstructure:"dbUser"`
+	DbPassword string `mapstructure:"dbPassword"`
+	DbName string `mapstructure:"dbName"`
+	StartBlock	int64 `mapstructure:"startBlock"` //For Test
 }
 
 func NewConfig() (*Config, error) {
@@ -28,7 +32,11 @@ func NewConfig() (*Config, error) {
 				"port":cfg.Port,
 				"chainHttp":cfg.ChainHttp,
 				"chainWs":cfg.ChainWs,
-				"mongoUri":cfg.MongoUri,
+				"dbHost":cfg.DbHost,
+				"dbPort":cfg.DbPort,
+				"dbUser":cfg.DbUser,
+				"dbPassword":cfg.DbPassword,
+				"dbName":cfg.DbName,
 				"startBlock":cfg.StartBlock,
 			},
 	).Debug("Check Flag")

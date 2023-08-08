@@ -8,10 +8,13 @@ import (
 
 type Block struct {
 	BlockHeight string `json:"blockHeight"`
+	Status bool `json:"status"`
+	Timestamp string `json:"timestamp"`
 	Receipient string `json:"receipient"`
 	Reward string `json:"reward"`
 	Size string `json:"size"`
 	GasUsed string `json:"gasUsed"`
+	GasLimit string `json:"gasLimit`
 	Hash string `json:"hash"`
 }
 

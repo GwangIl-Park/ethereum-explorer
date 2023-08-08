@@ -42,7 +42,7 @@ var rootCmd = &cobra.Command{
       return err
     }
 
-    db, err := db.NewDB(context.Background(), cfg.MongoUri, "explorer", []string{"blocks", "transactions"})
+    db, err := db.NewDB(context.Background(), *cfg, []string{"blocks", "transactions"})
     if err != nil {
       logger.Logger.WithError(err).Error("NewDB Error")
       return err

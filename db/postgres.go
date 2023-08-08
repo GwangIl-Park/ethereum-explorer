@@ -2,51 +2,51 @@ package db
 
 import (
 	"context"
+	"fmt"
 
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
-
+	"ethereum-explorer/config"
 	"ethereum-explorer/logger"
 
+	"database/sql"
+
 	log "github.com/sirupsen/logrus"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type DB struct {
-	Client *mongo.Client
+	Client *sql.DB
+	
 	Collections map[string]*mongo.Collection
 }
 
 type Document interface{}
 type Documents []interface{}
 
-func NewDB(ctx context.Context, mongoUri string, dbName string, colNames []string) (*DB, error) {
-	clientOptions := options.Client().ApplyURI(mongoUri)
+func NewDB(ctx context.Context, cfg config.Config, colNames []string) (*DB, error) {
+	dbConn := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", cfg.DbHost, cfg.DbPort, cfg.DbUser, cfg.DbPassword, cfg.DbName)
+	db, err := sql.Open("postgres", dbConn)
+	if err != nil {
+		panic(err)
+	}	
 	
 	logger.Logger.WithFields(log.Fields{
-		"uri": mongoUri,
-	}).Info("Connecting Mongo DB")
+		"uri": cfg.DbHost,
+		"db": cfg.DbName,
+	}).Info("postgresql connecting")
 
-	client, err := mongo.Connect(ctx, clientOptions)
+	defer db.Close()
+
+	err = db.Ping()
 	if err != nil {
-		return nil, err
-	}
-
-	err = client.Ping(ctx, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	collections := make(map[string]*mongo.Collection)
-
-	for _, colName := range colNames {
-		collections[colName] = client.Database(dbName).Collection(colName)
-	}
+		panic(err)
+	}	
 
 	logger.Logger.WithFields(log.Fields{
-		"uri": mongoUri,
-	}).Info("Mongo DB Connected")
+		"uri": cfg.DbHost,
+		"db": cfg.DbName,
+	}).Info("postgresql Connected")
 
-	return &DB{client, collections}, nil
+	return &DB{db, table}, nil
 }
 
 func (db *DB) InsertOneDocument(colName string, document Document) error {

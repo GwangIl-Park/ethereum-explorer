@@ -5,9 +5,6 @@ import (
 	"ethereum-explorer/models"
 
 	"ethereum-explorer/db"
-
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type blockRepository struct {
@@ -21,27 +18,43 @@ func NewBlockRepository(db *db.DB) models.BlockRepository {
 }
 
 func (br *blockRepository) GetBlocks(c context.Context, page int64, show int64) ([]models.Block, error) {
-	opts := options.Find().SetSort(bson.D{{Key: "blockheight",Value: -1}}).SetSkip((page-1) * show).SetLimit(show)
-	cursor, err := br.db.Collections["blocks"].Find(c, bson.M{}, opts)
+	rows, err := br.db.Client.Query(`SELECT * FROM "Block"`)
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
 
+	defer rows.Close()
+
 	var blocks []models.Block
-	if err := cursor.All(c, &blocks); err != nil {
-		return nil, err
+	for rows.Next() {
+		var block models.Block
+		err = rows.Scan(&block)
+		if err != nil {
+			panic(err)
+		}
+		blocks = append(blocks, block)
 	}
 
 	return blocks, nil
 }
 
 func (br *blockRepository) GetBlockByHeight(c context.Context, height string) (models.Block, error) {
-	cursor := br.db.Collections["blocks"].FindOne(c, bson.M{"blockheight":height})
-	
-	var block models.Block
-	if err := cursor.Decode(&block); err != nil {
-		return models.Block{}, err
+	rows, err := br.db.Client.Query(`SELECT * FROM "Block" WHERE blockHeight = %s`, height)
+	if err != nil {
+		panic(err)
 	}
-	
+
+	defer rows.Close()
+
+	var blocks []models.Block
+	for rows.Next() {
+		var block models.Block
+		err = rows.Scan(&block)
+		if err != nil {
+			panic(err)
+		}
+		blocks = append(blocks, block)
+	}
+
 	return block, nil
 }
