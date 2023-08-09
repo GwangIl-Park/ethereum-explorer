@@ -47,6 +47,7 @@ var rootCmd = &cobra.Command{
       logger.Logger.WithError(err).Error("NewDB Error")
       return err
     }
+    defer db.Close()
 
     gin := gin.Default()
     gin.Use(cors.New(cors.Config{
@@ -64,6 +65,8 @@ var rootCmd = &cobra.Command{
       logger.Logger.WithError(err).Error("NewEthClient Error")
       return err
     }
+    defer ethClient.Http.Close()
+    defer ethClient.Ws.Close()
 
     errorChan := make(chan error)
 

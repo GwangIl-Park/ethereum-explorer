@@ -10,13 +10,10 @@ import (
 	"database/sql"
 
 	log "github.com/sirupsen/logrus"
-	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type DB struct {
 	Client *sql.DB
-	
-	Collections map[string]*mongo.Collection
 }
 
 type Document interface{}
@@ -46,23 +43,9 @@ func NewDB(ctx context.Context, cfg config.Config, colNames []string) (*DB, erro
 		"db": cfg.DbName,
 	}).Info("postgresql Connected")
 
-	return &DB{db, table}, nil
+	return &DB{db}, nil
 }
 
-func (db *DB) InsertOneDocument(colName string, document Document) error {
-	_, err := db.Collections[colName].InsertOne(context.TODO(), document)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (db *DB) InsertManyDocument(colName string, documents Documents) error {
-	_, err := db.Collections[colName].InsertMany(context.TODO(), documents)
-	if err != nil {
-		return err
-	}
-
-	return nil
+func (db *DB) Close() {
+	db.Client.Close()
 }

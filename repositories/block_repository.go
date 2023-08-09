@@ -26,7 +26,7 @@ func (br *blockRepository) GetBlocks(c context.Context, page int64, show int64) 
 	defer rows.Close()
 
 	var blocks []models.Block
-	for rows.Next() {
+	for (rows.Next()) {
 		var block models.Block
 		err = rows.Scan(&block)
 		if err != nil {
@@ -46,14 +46,10 @@ func (br *blockRepository) GetBlockByHeight(c context.Context, height string) (m
 
 	defer rows.Close()
 
-	var blocks []models.Block
-	for rows.Next() {
-		var block models.Block
-		err = rows.Scan(&block)
-		if err != nil {
-			panic(err)
-		}
-		blocks = append(blocks, block)
+	var block models.Block
+	err = rows.Scan(&block)
+	if err != nil {
+		panic(err)
 	}
 
 	return block, nil
