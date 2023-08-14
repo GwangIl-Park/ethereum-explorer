@@ -6,6 +6,7 @@ import (
 	"ethereum-explorer/ethClient"
 	"ethereum-explorer/logger"
 	"ethereum-explorer/models"
+	"ethereum-explorer/repositories"
 	"math/big"
 	"strconv"
 
@@ -14,14 +15,22 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 )
 
+type Subscriber struct {
+	sub       ethereum.Subscription
+	header    chan *types.Header
+	br        models.BlockRepository
+	tr        models.TransactionRepository
+	errorChan chan error
+}
+
 func makeBlockModel(block *types.Block) *models.Block {
 	return &models.Block{
-		BlockHeight:block.Number().String(),
-		Receipient:block.Coinbase().String(),
-		Reward:block.BaseFee().String(),
-		Size:strconv.FormatUint(block.Size(), 10),
-		GasUsed:strconv.FormatUint(block.GasUsed(), 10),
-		Hash:block.Hash().String(),}
+		BlockHeight: block.Number().String(),
+		Receipient:  block.Coinbase().String(),
+		Reward:      block.BaseFee().String(),
+		Size:        strconv.FormatUint(block.Size(), 10),
+		GasUsed:     strconv.FormatUint(block.GasUsed(), 10),
+		Hash:        block.Hash().String()}
 }
 
 func makeTransactionModel(transaction *types.Transaction, height *big.Int) (*models.Transaction, error) {
@@ -30,25 +39,27 @@ func makeTransactionModel(transaction *types.Transaction, height *big.Int) (*mod
 		return nil, err
 	}
 	return &models.Transaction{
-		Hash:transaction.Hash().String(),
-		BlockHeight:height.String(),
-		From:msg.From.String(),
-		To:transaction.To().String(),
-		Value:transaction.Value().String(),
-		TxFee:transaction.Cost().String(),
+		Hash:        transaction.Hash().String(),
+		BlockHeight: height.String(),
+		From:        msg.From.String(),
+		To:          transaction.To().String(),
+		Value:       transaction.Value().String(),
+		TxFee:       transaction.Cost().String(),
 	}, nil
 }
 
-func insertBlockDocument(block *types.Block, db *dbPackage.DB, errorChan chan error) {
-	err := db.InsertOneDocument("blocks", makeBlockModel(block))
+func (sub *Subscriber) insertBlockDocument(block *types.Block, db *dbPackage.DB, errorChan chan error) {
+	ctx := context.Background()
+
+	err := sub.br.CreateBlock(ctx, makeBlockModel(block))
 	if err != nil {
 		errorChan <- err
 		return
 	}
-	
+
 	transactions := block.Transactions()
 	if transactions.Len() > 0 {
-		var documents dbPackage.Documents
+		var documents []*models.Transaction
 
 		for _, transaction := range transactions {
 			document, err := makeTransactionModel(transaction, block.Number())
@@ -58,8 +69,8 @@ func insertBlockDocument(block *types.Block, db *dbPackage.DB, errorChan chan er
 			}
 			documents = append(documents, document)
 		}
-		
-		err = db.InsertManyDocument("transactions", documents)
+
+		err = sub.tr.CreateTransactions(ctx, documents)
 		if err != nil {
 			errorChan <- err
 			return
@@ -67,9 +78,10 @@ func insertBlockDocument(block *types.Block, db *dbPackage.DB, errorChan chan er
 	}
 }
 
-func insertPreviousDocuments(blocks []*types.Block, db *dbPackage.DB) error {
-	var blockDocuments dbPackage.Documents
-	var transactionDocuments dbPackage.Documents
+func (sub *Subscriber) insertPreviousDocuments(blocks []*types.Block, db *dbPackage.DB) error {
+	var blockDocuments []*models.Block
+	var transactionDocuments []*models.Transaction
+	ctx := context.Background()
 
 	if len(blocks) > 0 {
 		for _, block := range blocks {
@@ -86,12 +98,12 @@ func insertPreviousDocuments(blocks []*types.Block, db *dbPackage.DB) error {
 				}
 			}
 		}
-		err := db.InsertManyDocument("blocks", blockDocuments)
+		err := sub.br.CreateBlocks(ctx, blockDocuments)
 		if err != nil {
 			return err
 		}
 		if len(transactionDocuments) > 0 {
-			err = db.InsertManyDocument("transactions", transactionDocuments)
+			err = sub.tr.CreateTransactions(ctx, transactionDocuments)
 			if err != nil {
 				return err
 			}
@@ -100,13 +112,10 @@ func insertPreviousDocuments(blocks []*types.Block, db *dbPackage.DB) error {
 	return nil
 }
 
-type Subscriber struct {
-	sub ethereum.Subscription
-	header chan *types.Header
-	errorChan chan error
-}
-
 func NewSubscriber(ethClient *ethClient.EthClient, db *dbPackage.DB, errorChan chan error) (*Subscriber, *big.Int, error) {
+	br := repositories.NewBlockRepository(db)
+	tr := repositories.NewTransactionRepository(db)
+
 	headers := make(chan *types.Header)
 
 	logger.Logger.Info("Subscribe New Head")
@@ -124,11 +133,11 @@ func NewSubscriber(ethClient *ethClient.EthClient, db *dbPackage.DB, errorChan c
 		return nil, nil, err
 	}
 
-	go insertBlockDocument(block, db, errorChan)
-
 	return &Subscriber{
 		sub,
 		headers,
+		br,
+		tr,
 		errorChan,
 	}, block.Number(), nil
 }
@@ -136,13 +145,13 @@ func NewSubscriber(ethClient *ethClient.EthClient, db *dbPackage.DB, errorChan c
 func (sub *Subscriber) ProcessSubscribe(ethClient *ethClient.EthClient, db *dbPackage.DB) {
 	for {
 		select {
-		case header:= <-sub.header:
+		case header := <-sub.header:
 			block, err := ethClient.Http.BlockByHash(context.Background(), header.Hash())
 			if err != nil {
 				sub.errorChan <- err
 				return
 			}
-			go insertBlockDocument(block, db, sub.errorChan)
+			go sub.insertBlockDocument(block, db, sub.errorChan)
 		case err := <-sub.sub.Err():
 			sub.errorChan <- err
 			return
@@ -150,11 +159,25 @@ func (sub *Subscriber) ProcessSubscribe(ethClient *ethClient.EthClient, db *dbPa
 	}
 }
 
-func (sub *Subscriber) ProcessPrevious(ethClient *ethClient.EthClient, db *dbPackage.DB, start *big.Int, initBlock *big.Int) {
-	one := big.NewInt(1)
+func (sub *Subscriber) ProcessPrevious(ethClient *ethClient.EthClient, db *dbPackage.DB, initBlock *big.Int) {
+	ctx := context.Background()
+	bigZero := big.NewInt(0)
+	bigOne := big.NewInt(1)
 	var blocks []*types.Block
 
-	for i:=start ; i.Cmp(initBlock) < 0; i.Add(i, one) {
+	blockHeights, err := sub.br.GetBlockHeights(ctx)
+	if err != nil {
+		sub.errorChan <- err
+	}
+
+	blockHeightsMap := make(map[*big.Int]bool)
+	for _, blockHeight := range blockHeights {
+		num := new(big.Int)
+		num.SetString(blockHeight, 10)
+		blockHeightsMap[num] = true
+	}
+
+	for i := initBlock; blockHeightsMap[i] && i.Cmp(bigZero) < 0; i.Sub(i, bigOne) {
 		block, err := ethClient.Http.BlockByNumber(context.Background(), i)
 		if err != nil {
 			sub.errorChan <- err
@@ -162,7 +185,7 @@ func (sub *Subscriber) ProcessPrevious(ethClient *ethClient.EthClient, db *dbPac
 		}
 		blocks = append(blocks, block)
 	}
-	err := insertPreviousDocuments(blocks, db)
+	err = sub.insertPreviousDocuments(blocks, db)
 	if err != nil {
 		sub.errorChan <- err
 	}

@@ -4,16 +4,15 @@ import (
 	"context"
 	"ethereum-explorer/db"
 	"ethereum-explorer/models"
+	"fmt"
 )
-
-
 
 type transactionRepository struct {
 	db *db.DB
 }
 
 func NewTransactionRepository(db *db.DB) models.TransactionRepository {
-	return &transactionRepository {
+	return &transactionRepository{
 		db,
 	}
 }
@@ -27,7 +26,7 @@ func (tr *transactionRepository) GetTransactions(c context.Context, page int64, 
 	defer rows.Close()
 
 	var transactions []models.Transaction
-	for (rows.Next()) {
+	for rows.Next() {
 		var transaction models.Transaction
 		err = rows.Scan(&transaction)
 		if err != nil {
@@ -64,7 +63,7 @@ func (tr *transactionRepository) GetTransactionsByAccount(c context.Context, acc
 	defer rows.Close()
 
 	var transactions []models.Transaction
-	for (rows.Next()) {
+	for rows.Next() {
 		var transaction models.Transaction
 		err = rows.Scan(&transaction)
 		if err != nil {
@@ -74,4 +73,43 @@ func (tr *transactionRepository) GetTransactionsByAccount(c context.Context, acc
 	}
 
 	return transactions, nil
+}
+
+func (tr *transactionRepository) CreateTransaction(c context.Context, transaction *models.Transaction) error {
+	valuesStr := fmt.Sprintf("(%s,%s,%s,%s,%s,%s)",
+		transaction.Hash,
+		transaction.BlockHeight,
+		transaction.From,
+		transaction.To,
+		transaction.Value,
+		transaction.TxFee,
+	)
+
+	_, err := tr.db.Client.Exec(`INSERT INTO Transaction VALUES %s`, valuesStr)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (tr *transactionRepository) CreateTransactions(c context.Context, transactions []*models.Transaction) error {
+	var valuesStr string
+
+	for _, transaction := range transactions {
+		valueStr := fmt.Sprintf("(%s,%s,%s,%s,%s,%s),",
+			transaction.Hash,
+			transaction.BlockHeight,
+			transaction.From,
+			transaction.To,
+			transaction.Value,
+			transaction.TxFee,
+		)
+		valuesStr = fmt.Sprintf("%s%s", valuesStr, valueStr)
+	}
+
+	_, err := tr.db.Client.Exec(`INSERT INTO Transaction VALUES %s`, valuesStr[:len(valuesStr)-1])
+	if err != nil {
+		return err
+	}
+	return nil
 }

@@ -7,21 +7,23 @@ import (
 )
 
 type Transaction struct {
-	Hash string `json:"hash"`
+	Hash        string `json:"hash"`
 	BlockHeight string `json:"blockHeight"`
-	From string `json:"from"`
-	To string `json:"to"`
-	Value string `json:"value"`
-	TxFee string `json:"txFee"`
+	From        string `json:"from"`
+	To          string `json:"to"`
+	Value       string `json:"value"`
+	TxFee       string `json:"txFee"`
 }
 
-type TransactionRepository interface{
+type TransactionRepository interface {
 	GetTransactions(c context.Context, page int64, show int64) ([]Transaction, error)
 	GetTransactionByHash(c context.Context, hash string) (Transaction, error)
 	GetTransactionsByAccount(c context.Context, account string) ([]Transaction, error)
+	CreateTransaction(c context.Context, transaction *Transaction) error
+	CreateTransactions(c context.Context, transactions []*Transaction) error
 }
 
-type TransactionUsecase interface{
+type TransactionUsecase interface {
 	GetTransactions(c *gin.Context) ([]Transaction, error)
 	GetTransactionByHash(c context.Context, hash string) (Transaction, error)
 	GetTransactionsByAccount(c context.Context, account string) ([]Transaction, error)
