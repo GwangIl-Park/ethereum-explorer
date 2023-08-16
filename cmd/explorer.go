@@ -10,6 +10,7 @@ import (
 	"ethereum-explorer/subscriber"
 	"fmt"
 	"log"
+	"math/big"
 	"net/http"
 	"os"
 	"time"
@@ -68,14 +69,17 @@ var rootCmd = &cobra.Command{
 		defer ethClient.Ws.Close()
 
 		errorChan := make(chan error)
+		initBlockNumberChan := make(chan *big.Int)
 
-		sub, initBlock, err := subscriber.NewSubscriber(ethClient, db, errorChan)
+		sub, err := subscriber.NewSubscriber(ethClient, db, errorChan)
 		if err != nil {
 			logger.Logger.WithError(err).Error("NewSubscriber Error")
 			return err
 		}
 
-		go sub.ProcessSubscribe(ethClient, db)
+		go sub.ProcessSubscribe(ethClient, initBlockNumberChan)
+
+		initBlock := <-initBlockNumberChan
 
 		go sub.ProcessPrevious(ethClient, db, initBlock)
 

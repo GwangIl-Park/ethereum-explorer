@@ -2,7 +2,9 @@ package models
 
 import (
 	"context"
+	"strconv"
 
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/gin-gonic/gin"
 )
 
@@ -29,4 +31,14 @@ type BlockRepository interface {
 type BlockUseCase interface {
 	GetBlocks(c *gin.Context) ([]Block, error)
 	GetBlockByHeight(c *gin.Context, height string) (Block, error)
+}
+
+func MakeBlockModelFromTypes(block *types.Block) *Block {
+	return &Block{
+		BlockHeight: block.Number().String(),
+		Receipient:  block.Coinbase().String(),
+		Reward:      block.BaseFee().String(),
+		Size:        strconv.FormatUint(block.Size(), 10),
+		GasUsed:     strconv.FormatUint(block.GasUsed(), 10),
+		Hash:        block.Hash().String()}
 }
