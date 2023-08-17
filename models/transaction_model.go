@@ -2,7 +2,6 @@ package models
 
 import (
 	"context"
-	"math/big"
 
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -10,12 +9,18 @@ import (
 )
 
 type Transaction struct {
-	Hash        string `json:"hash"`
-	BlockHeight string `json:"blockHeight"`
-	From        string `json:"from"`
-	To          string `json:"to"`
-	Value       string `json:"value"`
-	TxFee       string `json:"txFee"`
+	TransactionHash string `json:"transactionHash"`
+	Status          bool   `json:"status"`
+	BlockHeight     string `json:"blockHeight"`
+	Timestamp       string `json:"timestamp"`
+	From            string `json:"from"`
+	To              string `json:"to"`
+	Value           string `json:"value"`
+	TransactionFee  string `json:"transactionFee"`
+	GasPrice        string `json:"gasPrice"`
+	GasLimit        string `json:"gasLimit"`
+	GasUsed         string `json:"gasUsed"`
+	Input           string `json:"input"`
 }
 
 type TransactionRepository interface {
@@ -32,17 +37,23 @@ type TransactionUsecase interface {
 	GetTransactionsByAccount(c context.Context, account string) ([]Transaction, error)
 }
 
-func MakeTransactionModelFromTypes(transaction *types.Transaction, height *big.Int) (*Transaction, error) {
+func MakeTransactionModelFromTypes(receipt *types.Receipt, transaction types.Transaction, block types.Block) *Transaction {
 	msg, err := core.TransactionToMessage(transaction, types.LatestSignerForChainID(transaction.ChainId()), nil)
 	if err != nil {
 		return nil, err
 	}
 	return &Transaction{
-		Hash:        transaction.Hash().String(),
-		BlockHeight: height.String(),
-		From:        msg.From.String(),
-		To:          transaction.To().String(),
-		Value:       transaction.Value().String(),
-		TxFee:       transaction.Cost().String(),
+		TransactionHash: receipt.TxHash.Hex(),
+		Status:          receipt.Status != 0,
+		BlockHeight:     receipt.BlockNumber.String(),
+		Timestamp:       block.ReceivedAt.String(),
+		From:            msg.From.Hex(),
+		To:              msg.To.String(),
+		Value:           msg.Value.String(),
+		TransactionFee:  (Add(receipt.EffectiveGasPrice, receipt.CumulativeGasUsed)),
+		GasPrice:        receipt.EffectiveGasPrice.String(),
+		GasLimit:        transaction.EffectiveGasTip(),
+		GasUsed:         receipt.CumulativeGasUsed,
+		Input:           string(transaction.Data()),
 	}, nil
 }

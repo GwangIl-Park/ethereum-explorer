@@ -13,6 +13,7 @@ import (
 
 type Subscriber struct {
 	headerChan chan *types.Header
+	ethClient  *ethClient.EthClient
 	br         models.BlockRepository
 	tr         models.TransactionRepository
 	errorChan  chan error
@@ -26,6 +27,7 @@ func NewSubscriber(ethClient *ethClient.EthClient, db *dbPackage.DB, errorChan c
 
 	return &Subscriber{
 		headerChan,
+		ethClient,
 		br,
 		tr,
 		errorChan,
@@ -42,16 +44,15 @@ func (sub *Subscriber) insertNewBlocks(blocks []*types.Block) {
 		transactions := block.Transactions()
 		if transactions.Len() > 0 {
 			for _, transaction := range transactions {
-				transactionModel, err := models.MakeTransactionModelFromTypes(transaction, block.Number())
+				receipt, err := sub.ethClient.Http.TransactionReceipt(ctx, transaction.Hash())
 				if err != nil {
 					sub.errorChan <- err
 					return
 				}
-				transactionModels = append(transactionModels, transactionModel)
+				transactionModels = append(transactionModels, models.MakeTransactionModelFromTypes(receipt, *transaction, *block))
 			}
 		}
-		blockModel := models.MakeBlockModelFromTypes(block)
-		blockModels = append(blockModels, blockModel)
+		blockModels = append(blockModels, models.MakeBlockModelFromTypes(block))
 	}
 
 	if len(transactionModels) > 0 {
