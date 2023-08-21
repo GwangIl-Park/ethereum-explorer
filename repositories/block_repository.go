@@ -79,16 +79,17 @@ func (br *blockRepository) GetBlockByHeight(c context.Context, height string) (m
 
 func (br *blockRepository) CreateBlock(c context.Context, block *models.Block) error {
 
-	valuesStr := fmt.Sprintf("(%s,%t,%s,%s,%s,%s,%s,%s,%s)",
+	valuesStr := fmt.Sprintf("(%s,%v,%s,%v,%v,%v,%s,%s,%s,%s)",
 		block.BlockHeight,
-		block.Status,
 		block.Timestamp,
 		block.Receipient,
-		block.Reward,
 		block.Size,
 		block.GasUsed,
 		block.GasLimit,
+		block.BaseFee,
+		block.ExtraData,
 		block.Hash,
+		block.ParentHash,
 	)
 
 	_, err := br.db.Client.Exec(`INSERT INTO Block VALUES %s`, valuesStr)
@@ -102,17 +103,18 @@ func (br *blockRepository) CreateBlocks(c context.Context, blocks []*models.Bloc
 	var valuesStr string
 
 	for _, block := range blocks {
-		valueStr := fmt.Sprintf("(%s,%t,%s,%s,%s,%s,%s,%s,%s),",
-			block.BlockHeight,
-			block.Status,
-			block.Timestamp,
-			block.Receipient,
-			block.Reward,
-			block.Size,
-			block.GasUsed,
-			block.GasLimit,
-			block.Hash,
-		)
+		valueStr := fmt.Sprintf("(%s,%v,%s,%v,%v,%v,%s,%s,%s,%s)",
+		block.BlockHeight,
+		block.Timestamp,
+		block.Receipient,
+		block.Size,
+		block.GasUsed,
+		block.GasLimit,
+		block.BaseFee,
+		block.ExtraData,
+		block.Hash,
+		block.ParentHash,
+	)
 		valuesStr = fmt.Sprintf("%s%s", valuesStr, valueStr)
 	}
 

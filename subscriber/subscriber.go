@@ -49,7 +49,12 @@ func (sub *Subscriber) insertNewBlocks(blocks []*types.Block) {
 					sub.errorChan <- err
 					return
 				}
-				transactionModels = append(transactionModels, models.MakeTransactionModelFromTypes(receipt, *transaction, *block))
+				transactionModel, err :=models.MakeTransactionModelFromTypes(receipt, transaction, *block)
+				if err != nil {
+					sub.errorChan <- err
+					return
+				}
+				transactionModels = append(transactionModels, transactionModel)
 			}
 		}
 		blockModels = append(blockModels, models.MakeBlockModelFromTypes(block))

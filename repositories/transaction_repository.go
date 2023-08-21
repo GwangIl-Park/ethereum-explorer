@@ -76,13 +76,18 @@ func (tr *transactionRepository) GetTransactionsByAccount(c context.Context, acc
 }
 
 func (tr *transactionRepository) CreateTransaction(c context.Context, transaction *models.Transaction) error {
-	valuesStr := fmt.Sprintf("(%s,%s,%s,%s,%s,%s)",
-		transaction.Hash,
+	valuesStr := fmt.Sprintf("(%s,%t,%s,%s,%s,%s,%s,%s,%v,%v,%s)",
+		transaction.TransactionHash,
+		transaction.Status,
 		transaction.BlockHeight,
 		transaction.From,
 		transaction.To,
 		transaction.Value,
-		transaction.TxFee,
+		transaction.TransactionFee,
+		transaction.GasPrice,
+		transaction.GasLimit,
+		transaction.GasUsed,
+		transaction.Input,
 	)
 
 	_, err := tr.db.Client.Exec(`INSERT INTO Transaction VALUES %s`, valuesStr)
@@ -96,14 +101,19 @@ func (tr *transactionRepository) CreateTransactions(c context.Context, transacti
 	var valuesStr string
 
 	for _, transaction := range transactions {
-		valueStr := fmt.Sprintf("(%s,%s,%s,%s,%s,%s),",
-			transaction.Hash,
-			transaction.BlockHeight,
-			transaction.From,
-			transaction.To,
-			transaction.Value,
-			transaction.TxFee,
-		)
+		valueStr := fmt.Sprintf("(%s,%t,%s,%s,%s,%s,%s,%s,%v,%v,%s)",
+		transaction.TransactionHash,
+		transaction.Status,
+		transaction.BlockHeight,
+		transaction.From,
+		transaction.To,
+		transaction.Value,
+		transaction.TransactionFee,
+		transaction.GasPrice,
+		transaction.GasLimit,
+		transaction.GasUsed,
+		transaction.Input,
+	)
 		valuesStr = fmt.Sprintf("%s%s", valuesStr, valueStr)
 	}
 

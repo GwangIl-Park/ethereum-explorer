@@ -2,7 +2,6 @@ package models
 
 import (
 	"context"
-	"strconv"
 
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/gin-gonic/gin"
@@ -11,12 +10,12 @@ import (
 type Block struct {
 	BlockHeight string `json:"blockHeight"`
 	//Status      bool   `json:"status"`
-	Timestamp  string `json:"timestamp"`
+	Timestamp  uint64 `json:"timestamp"`
 	Receipient string `json:"receipient"`
-	Reward     string `json:"reward"`
-	Size       string `json:"size"`
-	GasUsed    string `json:"gasUsed"`
-	GasLimit   string `json:"gasLimit"`
+	//Reward
+	Size       uint64 `json:"size"`
+	GasUsed    uint64 `json:"gasUsed"`
+	GasLimit   uint64 `json:"gasLimit"`
 	BaseFee    string `json:"baseFee"`
 	ExtraData  string `json:"extraData"`
 	Hash       string `json:"hash"`
@@ -39,11 +38,10 @@ type BlockUseCase interface {
 func MakeBlockModelFromTypes(block *types.Block) *Block {
 	return &Block{
 		BlockHeight: block.Number().String(),
-		Timestamp:   string(block.Header().Time),
+		Timestamp:   block.Header().Time,
 		Receipient:  block.Coinbase().String(),
-		Reward:      block.BaseFee().String(),
-		Size:        strconv.FormatUint(block.Size(), 10),
-		GasUsed:     strconv.FormatUint(block.GasUsed(), 10),
+		Size:        block.Size(),
+		GasUsed:     block.GasUsed(),
 		GasLimit:    block.GasLimit(),
 		BaseFee:     block.BaseFee().String(),
 		ExtraData:   string(block.Extra()),
