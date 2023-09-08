@@ -17,8 +17,6 @@ import (
 
 	server "ethereum-explorer/server"
 
-	"github.com/gin-contrib/cors"
-	"github.com/gin-gonic/gin"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -49,15 +47,6 @@ var rootCmd = &cobra.Command{
 		}
 		defer db.Close()
 
-		gin := gin.Default()
-		gin.Use(cors.New(cors.Config{
-			AllowOrigins:     []string{"http://localhost:3000"},
-			AllowMethods:     []string{http.MethodGet},
-			AllowHeaders:     []string{"Content-Type", "X-XSRF-TOKEN", "Accept", "Origin", "X-Requested-With", "Authorization"},
-			ExposeHeaders:    []string{"Content-Length"},
-			AllowCredentials: true,
-		}))
-
 		timeout := time.Duration(1) * time.Second
 
 		ethClient, err := ethClient.NewEthClient(cfg)
@@ -83,11 +72,12 @@ var rootCmd = &cobra.Command{
 
 		go sub.ProcessPrevious(ethClient, db, initBlock)
 
-		sv := server.NewServer(db, cfg, gin, ethClient, sub, timeout)
+		sv := server.NewServer(db, cfg, ethClient, sub, timeout)
 
-		routes.Setup(&sv)
+		router := http.NewServeMux()
+		routes.Setup(&sv, router)
 
-		go sv.Start(errorChan)
+		go sv.Start(errorChan, router)
 
 		err = <-errorChan
 		if err != nil {

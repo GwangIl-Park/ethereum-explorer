@@ -5,33 +5,40 @@ import (
 	"ethereum-explorer/db"
 	"ethereum-explorer/ethClient"
 	"ethereum-explorer/subscriber"
-	"fmt"
+	"net/http"
 	"time"
 
-	"github.com/gin-gonic/gin"
+	"github.com/rs/cors"
 )
 
 type Server struct {
-	Db *db.DB
-	Config *config.Config
-	Gin *gin.Engine
+	Db        *db.DB
+	Config    *config.Config
 	EthClient *ethClient.EthClient
-	Sub *subscriber.Subscriber
-	Timeout time.Duration
+	Sub       *subscriber.Subscriber
+	Timeout   time.Duration
 }
 
-func NewServer(db *db.DB, cfg *config.Config, gin *gin.Engine, ethClient *ethClient.EthClient, sub *subscriber.Subscriber, timeout time.Duration) Server {
+func NewServer(db *db.DB, cfg *config.Config, ethClient *ethClient.EthClient, sub *subscriber.Subscriber, timeout time.Duration) Server {
 	return Server{
 		db,
 		cfg,
-		gin,
 		ethClient,
 		sub,
 		timeout,
 	}
 }
 
-func (server *Server) Start(errorChan chan error) {
-	address := fmt.Sprintf("%s:%s", server.Config.Host, server.Config.Port)
-	errorChan <- server.Gin.Run(address)
+func (server *Server) Start(errorChan chan error, router *http.ServeMux) {
+	handler := cors.Default().Handler(router)
+
+	corsMiddleware := cors.New(cors.Options{
+		AllowedOrigins:   []string{"http://foo.com", "http://foo.com:8080"},
+		AllowCredentials: true,
+		Debug:            true,
+	})
+
+	handler = corsMiddleware.Handler(handler)
+
+	http.ListenAndServe(server.Config.Url, handler)
 }

@@ -5,16 +5,16 @@ import (
 	"ethereum-explorer/db"
 	"ethereum-explorer/repositories"
 	"ethereum-explorer/usecases"
+	"net/http"
 	"time"
-
-	"github.com/gin-gonic/gin"
 )
-func NewTransactionRouter(timeout time.Duration, db *db.DB, group *gin.RouterGroup) {
+
+func NewTransactionRouter(timeout time.Duration, db *db.DB, router *http.ServeMux) {
 	tr := repositories.NewTransactionRepository(db)
 	tc := &controller.TransactionController{
 		TransactionUsecase: usecases.NewTransactionUsecase(tr, timeout),
 	}
-	group.GET("/transactions", tc.GetTransactions)
-	group.GET("/transaction/hash/:hash", tc.GetTransactionByHash)
-	group.GET("/transaction/account/:account", tc.GetTransactionsByAccount)
+	router.HandleFunc("/transactions", tc.GetTransactions)
+	router.HandleFunc("/transaction/hash/:hash", tc.GetTransactionByHash)
+	router.HandleFunc("/transaction/account/:account", tc.GetTransactionsByAccount)
 }
