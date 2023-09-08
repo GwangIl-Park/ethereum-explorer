@@ -9,7 +9,7 @@ import (
 )
 
 type BlockController struct {
-	BlockUsecase model.BlockUseCase
+	BlockService model.BlockUseCase
 }
 
 func (bc *BlockController) CreateBlock(c *gin.Context) {
@@ -23,7 +23,7 @@ func (bc *BlockController) CreateBlock(c *gin.Context) {
 }
 
 func (bc *BlockController) GetBlocks(w http.ResponseWriter, r *http.Request) {
-	blocks, err := bc.BlockUsecase.GetBlocks(c)
+	blocks, err := bc.BlockService.GetBlocks(c)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, model.ErrorResponse{Message: err.Error()})
 		return
@@ -32,7 +32,7 @@ func (bc *BlockController) GetBlocks(w http.ResponseWriter, r *http.Request) {
 }
 
 func (bc *BlockController) GetBlockByHeight(w http.ResponseWriter, r *http.Request) {
-	block, err := bc.BlockUsecase.GetBlockByHeight(c, c.Param("height"))
+	block, err := bc.BlockService.GetBlockByHeight(c, c.Param("height"))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, model.ErrorResponse{Message: err.Error()})
 		return

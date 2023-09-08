@@ -1,4 +1,4 @@
-package usecase
+package service
 
 import (
 	"context"
@@ -9,19 +9,19 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type transactionUsecase struct {
+type transactionService struct {
 	transactionRepository model.TransactionRepository
 	contextTimeout        time.Duration
 }
 
-func NewTransactionUsecase(transactionRepository model.TransactionRepository, timeout time.Duration) model.TransactionUsecase {
-	return &transactionUsecase{
+func NewTransactionService(transactionRepository model.TransactionRepository, timeout time.Duration) model.TransactionService {
+	return &transactionService{
 		transactionRepository,
 		timeout,
 	}
 }
 
-func (tu *transactionUsecase) GetTransactions(c *gin.Context) ([]model.Transaction, error) {
+func (tu *transactionService) GetTransactions(c *gin.Context) ([]model.Transaction, error) {
 	page, err := strconv.Atoi(c.DefaultQuery("page", "1"))
 	if err != nil {
 		return nil, err
@@ -36,13 +36,13 @@ func (tu *transactionUsecase) GetTransactions(c *gin.Context) ([]model.Transacti
 	return tu.transactionRepository.GetTransactions(ctx, int64(page), int64(show))
 }
 
-func (tu *transactionUsecase) GetTransactionByHash(c context.Context, hash string) (model.Transaction, error) {
+func (tu *transactionService) GetTransactionByHash(c context.Context, hash string) (model.Transaction, error) {
 	ctx, cancel := context.WithTimeout(c, tu.contextTimeout)
 	defer cancel()
 	return tu.transactionRepository.GetTransactionByHash(ctx, hash)
 }
 
-func (tu *transactionUsecase) GetTransactionsByAccount(c context.Context, account string) ([]model.Transaction, error) {
+func (tu *transactionService) GetTransactionsByAccount(c context.Context, account string) ([]model.Transaction, error) {
 	ctx, cancel := context.WithTimeout(c, tu.contextTimeout)
 	defer cancel()
 	return tu.transactionRepository.GetTransactionsByAccount(ctx, account)

@@ -31,7 +31,7 @@ type TransactionRepository interface {
 	CreateTransactions(c context.Context, transactions []*Transaction) error
 }
 
-type TransactionUsecase interface {
+type TransactionService interface {
 	GetTransactions(c *gin.Context) ([]Transaction, error)
 	GetTransactionByHash(c context.Context, hash string) (Transaction, error)
 	GetTransactionsByAccount(c context.Context, account string) ([]Transaction, error)

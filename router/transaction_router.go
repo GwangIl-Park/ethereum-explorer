@@ -4,7 +4,7 @@ import (
 	"ethereum-explorer/controller"
 	"ethereum-explorer/db"
 	"ethereum-explorer/repository"
-	"ethereum-explorer/usecase"
+	"ethereum-explorer/service"
 	"net/http"
 	"time"
 )
@@ -12,7 +12,7 @@ import (
 func NewTransactionRouter(timeout time.Duration, db *db.DB, router *http.ServeMux) {
 	tr := repository.NewTransactionRepository(db)
 	tc := &controller.TransactionController{
-		TransactionUsecase: usecase.NewTransactionUsecase(tr, timeout),
+		TransactionService: service.NewTransactionService(tr, timeout),
 	}
 	router.HandleFunc("/transactions", tc.GetTransactions)
 	router.HandleFunc("/transaction/hash/:hash", tc.GetTransactionByHash)

@@ -1,4 +1,4 @@
-package usecase
+package service
 
 import (
 	"context"
@@ -9,19 +9,19 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type blockUsecase struct {
+type blockService struct {
 	blockRepository model.BlockRepository
 	contextTimeout  time.Duration
 }
 
-func NewBlockUsecase(blockRepository model.BlockRepository, timeout time.Duration) model.BlockUseCase {
-	return &blockUsecase{
+func NewBlockService(blockRepository model.BlockRepository, timeout time.Duration) model.BlockUseCase {
+	return &blockService{
 		blockRepository,
 		timeout,
 	}
 }
 
-func (bu *blockUsecase) GetBlocks(c *gin.Context) ([]model.Block, error) {
+func (bu *blockService) GetBlocks(c *gin.Context) ([]model.Block, error) {
 	page, err := strconv.Atoi(c.DefaultQuery("page", "1"))
 	if err != nil {
 		return nil, err
@@ -36,7 +36,7 @@ func (bu *blockUsecase) GetBlocks(c *gin.Context) ([]model.Block, error) {
 	return bu.blockRepository.GetBlocks(ctx, int64(page), int64(show))
 }
 
-func (bu *blockUsecase) GetBlockByHeight(c *gin.Context, height string) (model.Block, error) {
+func (bu *blockService) GetBlockByHeight(c *gin.Context, height string) (model.Block, error) {
 	ctx, cancel := context.WithTimeout(c, bu.contextTimeout)
 	defer cancel()
 	return bu.blockRepository.GetBlockByHeight(ctx, height)
