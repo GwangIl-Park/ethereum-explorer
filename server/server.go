@@ -11,6 +11,15 @@ import (
 	"github.com/rs/cors"
 )
 
+func getCors() *cors.Cors {
+	return cors.New(cors.Options{
+		AllowCredentials: true,
+		AllowedHeaders:   []string{"ACCEPT", "Authorization", "Content-Type", "X-CSRF-Token"},
+		ExposedHeaders:   []string{"Content-Length"},
+		MaxAge:           60,
+	})
+}
+
 type Server struct {
 	Db        *db.DB
 	Config    *config.Config
@@ -32,13 +41,7 @@ func NewServer(db *db.DB, cfg *config.Config, ethClient *ethClient.EthClient, su
 func (server *Server) Start(errorChan chan error, router *http.ServeMux) {
 	handler := cors.Default().Handler(router)
 
-	corsMiddleware := cors.New(cors.Options{
-		AllowedOrigins:   []string{"http://foo.com", "http://foo.com:8080"},
-		AllowCredentials: true,
-		Debug:            true,
-	})
-
-	handler = corsMiddleware.Handler(handler)
+	handler = getCors().Handler(handler)
 
 	http.ListenAndServe(server.Config.Url, handler)
 }
