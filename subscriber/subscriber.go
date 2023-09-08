@@ -4,8 +4,8 @@ import (
 	"context"
 	dbPackage "ethereum-explorer/db"
 	"ethereum-explorer/ethClient"
-	"ethereum-explorer/models"
-	"ethereum-explorer/repositories"
+	"ethereum-explorer/model"
+	"ethereum-explorer/repository"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/core/types"
@@ -14,14 +14,14 @@ import (
 type Subscriber struct {
 	headerChan chan *types.Header
 	ethClient  *ethClient.EthClient
-	br         models.BlockRepository
-	tr         models.TransactionRepository
+	br         model.BlockRepository
+	tr         model.TransactionRepository
 	errorChan  chan error
 }
 
 func NewSubscriber(ethClient *ethClient.EthClient, db *dbPackage.DB, errorChan chan error) (*Subscriber, error) {
-	br := repositories.NewBlockRepository(db)
-	tr := repositories.NewTransactionRepository(db)
+	br := repository.NewBlockRepository(db)
+	tr := repository.NewTransactionRepository(db)
 
 	headerChan := make(chan *types.Header)
 
@@ -37,8 +37,8 @@ func NewSubscriber(ethClient *ethClient.EthClient, db *dbPackage.DB, errorChan c
 func (sub *Subscriber) insertNewBlocks(blocks []*types.Block) {
 	ctx := context.Background()
 
-	var blockModels []*models.Block
-	var transactionModels []*models.Transaction
+	var blockmodel []*model.Block
+	var transactionmodel []*model.Transaction
 
 	for _, block := range blocks {
 		transactions := block.Transactions()
@@ -49,26 +49,26 @@ func (sub *Subscriber) insertNewBlocks(blocks []*types.Block) {
 					sub.errorChan <- err
 					return
 				}
-				transactionModel, err :=models.MakeTransactionModelFromTypes(receipt, transaction, *block)
+				transactionModel, err := model.MakeTransactionModelFromTypes(receipt, transaction, *block)
 				if err != nil {
 					sub.errorChan <- err
 					return
 				}
-				transactionModels = append(transactionModels, transactionModel)
+				transactionmodel = append(transactionmodel, transactionModel)
 			}
 		}
-		blockModels = append(blockModels, models.MakeBlockModelFromTypes(block))
+		blockmodel = append(blockmodel, model.MakeBlockModelFromTypes(block))
 	}
 
-	if len(transactionModels) > 0 {
-		err := sub.tr.CreateTransactions(ctx, transactionModels)
+	if len(transactionmodel) > 0 {
+		err := sub.tr.CreateTransactions(ctx, transactionmodel)
 		if err != nil {
 			sub.errorChan <- err
 			return
 		}
 	}
 
-	err := sub.br.CreateBlocks(ctx, blockModels)
+	err := sub.br.CreateBlocks(ctx, blockmodel)
 	if err != nil {
 		sub.errorChan <- err
 		return

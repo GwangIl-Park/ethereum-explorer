@@ -1,22 +1,23 @@
 package controller
 
 import (
-	"ethereum-explorer/models"
 	"net/http"
+
+	"ethereum-explorer/model"
 
 	"github.com/gin-gonic/gin"
 )
 
 type BlockController struct {
-	BlockUsecase models.BlockUseCase
+	BlockUsecase model.BlockUseCase
 }
 
 func (bc *BlockController) CreateBlock(c *gin.Context) {
-	var block models.Block
+	var block model.Block
 
 	err := c.ShouldBind(&block)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, models.ErrorResponse{Message: err.Error()})
+		c.JSON(http.StatusBadRequest, model.ErrorResponse{Message: err.Error()})
 		return
 	}
 }
@@ -24,7 +25,7 @@ func (bc *BlockController) CreateBlock(c *gin.Context) {
 func (bc *BlockController) GetBlocks(w http.ResponseWriter, r *http.Request) {
 	blocks, err := bc.BlockUsecase.GetBlocks(c)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, models.ErrorResponse{Message: err.Error()})
+		c.JSON(http.StatusInternalServerError, model.ErrorResponse{Message: err.Error()})
 		return
 	}
 	c.JSON(http.StatusOK, blocks)
@@ -33,7 +34,7 @@ func (bc *BlockController) GetBlocks(w http.ResponseWriter, r *http.Request) {
 func (bc *BlockController) GetBlockByHeight(w http.ResponseWriter, r *http.Request) {
 	block, err := bc.BlockUsecase.GetBlockByHeight(c, c.Param("height"))
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, models.ErrorResponse{Message: err.Error()})
+		c.JSON(http.StatusInternalServerError, model.ErrorResponse{Message: err.Error()})
 		return
 	}
 	c.JSON(http.StatusOK, block)

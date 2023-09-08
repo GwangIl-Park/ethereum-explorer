@@ -1,8 +1,8 @@
-package repositories
+package repository
 
 import (
 	"context"
-	"ethereum-explorer/models"
+	"ethereum-explorer/model"
 	"fmt"
 
 	"ethereum-explorer/db"
@@ -12,13 +12,13 @@ type blockRepository struct {
 	db *db.DB
 }
 
-func NewBlockRepository(db *db.DB) models.BlockRepository {
+func NewBlockRepository(db *db.DB) model.BlockRepository {
 	return &blockRepository{
 		db,
 	}
 }
 
-func (br *blockRepository) GetBlocks(c context.Context, page int64, show int64) ([]models.Block, error) {
+func (br *blockRepository) GetBlocks(c context.Context, page int64, show int64) ([]model.Block, error) {
 	rows, err := br.db.Client.Query(`SELECT * FROM "Block"`)
 	if err != nil {
 		panic(err)
@@ -26,9 +26,9 @@ func (br *blockRepository) GetBlocks(c context.Context, page int64, show int64) 
 
 	defer rows.Close()
 
-	var blocks []models.Block
+	var blocks []model.Block
 	for rows.Next() {
-		var block models.Block
+		var block model.Block
 		err = rows.Scan(&block)
 		if err != nil {
 			panic(err)
@@ -60,7 +60,7 @@ func (br *blockRepository) GetBlockHeights(c context.Context) ([]string, error) 
 	return blockHeights, nil
 }
 
-func (br *blockRepository) GetBlockByHeight(c context.Context, height string) (models.Block, error) {
+func (br *blockRepository) GetBlockByHeight(c context.Context, height string) (model.Block, error) {
 	rows, err := br.db.Client.Query(`SELECT * FROM "Block" WHERE blockHeight = %s`, height)
 	if err != nil {
 		panic(err)
@@ -68,7 +68,7 @@ func (br *blockRepository) GetBlockByHeight(c context.Context, height string) (m
 
 	defer rows.Close()
 
-	var block models.Block
+	var block model.Block
 	err = rows.Scan(&block)
 	if err != nil {
 		panic(err)
@@ -77,7 +77,7 @@ func (br *blockRepository) GetBlockByHeight(c context.Context, height string) (m
 	return block, nil
 }
 
-func (br *blockRepository) CreateBlock(c context.Context, block *models.Block) error {
+func (br *blockRepository) CreateBlock(c context.Context, block *model.Block) error {
 
 	valuesStr := fmt.Sprintf("(%s,%v,%s,%v,%v,%v,%s,%s,%s,%s)",
 		block.BlockHeight,
@@ -99,22 +99,22 @@ func (br *blockRepository) CreateBlock(c context.Context, block *models.Block) e
 	return nil
 }
 
-func (br *blockRepository) CreateBlocks(c context.Context, blocks []*models.Block) error {
+func (br *blockRepository) CreateBlocks(c context.Context, blocks []*model.Block) error {
 	var valuesStr string
 
 	for _, block := range blocks {
 		valueStr := fmt.Sprintf("(%s,%v,%s,%v,%v,%v,%s,%s,%s,%s)",
-		block.BlockHeight,
-		block.Timestamp,
-		block.Receipient,
-		block.Size,
-		block.GasUsed,
-		block.GasLimit,
-		block.BaseFee,
-		block.ExtraData,
-		block.Hash,
-		block.ParentHash,
-	)
+			block.BlockHeight,
+			block.Timestamp,
+			block.Receipient,
+			block.Size,
+			block.GasUsed,
+			block.GasLimit,
+			block.BaseFee,
+			block.ExtraData,
+			block.Hash,
+			block.ParentHash,
+		)
 		valuesStr = fmt.Sprintf("%s%s", valuesStr, valueStr)
 	}
 

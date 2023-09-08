@@ -1,18 +1,18 @@
-package routes
+package router
 
 import (
 	"ethereum-explorer/controller"
 	"ethereum-explorer/db"
-	"ethereum-explorer/repositories"
-	"ethereum-explorer/usecases"
+	"ethereum-explorer/repository"
+	"ethereum-explorer/usecase"
 	"net/http"
 	"time"
 )
 
 func NewTransactionRouter(timeout time.Duration, db *db.DB, router *http.ServeMux) {
-	tr := repositories.NewTransactionRepository(db)
+	tr := repository.NewTransactionRepository(db)
 	tc := &controller.TransactionController{
-		TransactionUsecase: usecases.NewTransactionUsecase(tr, timeout),
+		TransactionUsecase: usecase.NewTransactionUsecase(tr, timeout),
 	}
 	router.HandleFunc("/transactions", tc.GetTransactions)
 	router.HandleFunc("/transaction/hash/:hash", tc.GetTransactionByHash)

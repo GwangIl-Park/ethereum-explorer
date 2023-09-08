@@ -1,8 +1,8 @@
-package usecases
+package usecase
 
 import (
 	"context"
-	"ethereum-explorer/models"
+	"ethereum-explorer/model"
 	"strconv"
 	"time"
 
@@ -10,18 +10,18 @@ import (
 )
 
 type transactionUsecase struct {
-	transactionRepository models.TransactionRepository
-	contextTimeout time.Duration
+	transactionRepository model.TransactionRepository
+	contextTimeout        time.Duration
 }
 
-func NewTransactionUsecase(transactionRepository models.TransactionRepository, timeout time.Duration) models.TransactionUsecase {
+func NewTransactionUsecase(transactionRepository model.TransactionRepository, timeout time.Duration) model.TransactionUsecase {
 	return &transactionUsecase{
 		transactionRepository,
 		timeout,
 	}
 }
 
-func (tu *transactionUsecase) GetTransactions(c *gin.Context) ([]models.Transaction, error) {
+func (tu *transactionUsecase) GetTransactions(c *gin.Context) ([]model.Transaction, error) {
 	page, err := strconv.Atoi(c.DefaultQuery("page", "1"))
 	if err != nil {
 		return nil, err
@@ -36,13 +36,13 @@ func (tu *transactionUsecase) GetTransactions(c *gin.Context) ([]models.Transact
 	return tu.transactionRepository.GetTransactions(ctx, int64(page), int64(show))
 }
 
-func (tu *transactionUsecase) GetTransactionByHash(c context.Context, hash string) (models.Transaction, error) {
+func (tu *transactionUsecase) GetTransactionByHash(c context.Context, hash string) (model.Transaction, error) {
 	ctx, cancel := context.WithTimeout(c, tu.contextTimeout)
 	defer cancel()
 	return tu.transactionRepository.GetTransactionByHash(ctx, hash)
 }
 
-func (tu *transactionUsecase) GetTransactionsByAccount(c context.Context, account string) ([]models.Transaction, error) {
+func (tu *transactionUsecase) GetTransactionsByAccount(c context.Context, account string) ([]model.Transaction, error) {
 	ctx, cancel := context.WithTimeout(c, tu.contextTimeout)
 	defer cancel()
 	return tu.transactionRepository.GetTransactionsByAccount(ctx, account)

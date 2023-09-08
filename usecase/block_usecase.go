@@ -1,8 +1,8 @@
-package usecases
+package usecase
 
 import (
 	"context"
-	"ethereum-explorer/models"
+	"ethereum-explorer/model"
 	"strconv"
 	"time"
 
@@ -10,18 +10,18 @@ import (
 )
 
 type blockUsecase struct {
-	blockRepository models.BlockRepository
-	contextTimeout time.Duration
+	blockRepository model.BlockRepository
+	contextTimeout  time.Duration
 }
 
-func NewBlockUsecase(blockRepository models.BlockRepository, timeout time.Duration) models.BlockUseCase {
+func NewBlockUsecase(blockRepository model.BlockRepository, timeout time.Duration) model.BlockUseCase {
 	return &blockUsecase{
 		blockRepository,
 		timeout,
 	}
 }
 
-func (bu *blockUsecase) GetBlocks(c *gin.Context) ([]models.Block, error) {
+func (bu *blockUsecase) GetBlocks(c *gin.Context) ([]model.Block, error) {
 	page, err := strconv.Atoi(c.DefaultQuery("page", "1"))
 	if err != nil {
 		return nil, err
@@ -36,7 +36,7 @@ func (bu *blockUsecase) GetBlocks(c *gin.Context) ([]models.Block, error) {
 	return bu.blockRepository.GetBlocks(ctx, int64(page), int64(show))
 }
 
-func (bu *blockUsecase) GetBlockByHeight(c *gin.Context, height string) (models.Block, error) {
+func (bu *blockUsecase) GetBlockByHeight(c *gin.Context, height string) (model.Block, error) {
 	ctx, cancel := context.WithTimeout(c, bu.contextTimeout)
 	defer cancel()
 	return bu.blockRepository.GetBlockByHeight(ctx, height)

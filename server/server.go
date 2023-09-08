@@ -4,7 +4,7 @@ import (
 	"ethereum-explorer/config"
 	"ethereum-explorer/db"
 	"ethereum-explorer/ethClient"
-	"ethereum-explorer/middlewares/handler"
+	"ethereum-explorer/middleware/handler"
 	"ethereum-explorer/subscriber"
 	"net/http"
 	"time"

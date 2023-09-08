@@ -1,18 +1,18 @@
-package routes
+package router
 
 import (
 	"ethereum-explorer/controller"
 	"ethereum-explorer/db"
-	"ethereum-explorer/repositories"
-	"ethereum-explorer/usecases"
+	"ethereum-explorer/repository"
+	"ethereum-explorer/usecase"
 	"net/http"
 	"time"
 )
 
 func NewBlockRouter(timeout time.Duration, db *db.DB, router *http.ServeMux) {
-	br := repositories.NewBlockRepository(db)
+	br := repository.NewBlockRepository(db)
 	bc := &controller.BlockController{
-		BlockUsecase: usecases.NewBlockUsecase(br, timeout),
+		BlockUsecase: usecase.NewBlockUsecase(br, timeout),
 	}
 	router.HandleFunc("/blocks", bc.GetBlocks)
 	router.HandleFunc("/block/:height", bc.GetBlockByHeight)

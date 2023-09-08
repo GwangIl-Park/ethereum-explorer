@@ -1,4 +1,4 @@
-package models
+package model
 
 import (
 	"context"
@@ -43,8 +43,8 @@ func MakeTransactionModelFromTypes(receipt *types.Receipt, transaction *types.Tr
 		return nil, err
 	}
 	var transactionFee *big.Int
-	transactionFee.Mul(receipt.EffectiveGasPrice, new(big.Int).SetUint64(receipt.CumulativeGasUsed)) 
-	
+	transactionFee.Mul(receipt.EffectiveGasPrice, new(big.Int).SetUint64(receipt.CumulativeGasUsed))
+
 	return &Transaction{
 		TransactionHash: receipt.TxHash.Hex(),
 		Status:          receipt.Status != 0,

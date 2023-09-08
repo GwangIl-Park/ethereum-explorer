@@ -1,18 +1,18 @@
 package controller
 
 import (
-	"ethereum-explorer/models"
+	"ethereum-explorer/model"
 	"net/http"
 )
 
 type TransactionController struct {
-	TransactionUsecase models.TransactionUsecase
+	TransactionUsecase model.TransactionUsecase
 }
 
 func (tc *TransactionController) GetTransactions(w http.ResponseWriter, r *http.Request) {
 	transactions, err := tc.TransactionUsecase.GetTransactions(c)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, models.ErrorResponse{Message: err.Error()})
+		c.JSON(http.StatusInternalServerError, model.ErrorResponse{Message: err.Error()})
 		return
 	}
 	c.JSON(http.StatusOK, transactions)
@@ -22,7 +22,7 @@ func (tc *TransactionController) GetTransactionByHash(w http.ResponseWriter, r *
 	hash := c.Param("hash")
 	transaction, err := tc.TransactionUsecase.GetTransactionByHash(c, hash)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, models.ErrorResponse{Message: err.Error()})
+		c.JSON(http.StatusInternalServerError, model.ErrorResponse{Message: err.Error()})
 		return
 	}
 	c.JSON(http.StatusOK, transaction)
@@ -32,7 +32,7 @@ func (tc *TransactionController) GetTransactionsByAccount(w http.ResponseWriter,
 	account := c.Param("account")
 	transaction, err := tc.TransactionUsecase.GetTransactionsByAccount(c, account)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, models.ErrorResponse{Message: err.Error()})
+		c.JSON(http.StatusInternalServerError, model.ErrorResponse{Message: err.Error()})
 		return
 	}
 	c.JSON(http.StatusOK, transaction)

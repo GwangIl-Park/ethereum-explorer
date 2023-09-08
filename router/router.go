@@ -1,4 +1,4 @@
-package routes
+package router
 
 import (
 	"ethereum-explorer/server"
