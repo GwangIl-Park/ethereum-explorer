@@ -1,43 +1,48 @@
 package service
 
 import (
-	"context"
 	"ethereum-explorer/model"
-	"strconv"
+	"ethereum-explorer/repository"
+	"net/http"
 	"time"
-
-	"github.com/gin-gonic/gin"
 )
 
+type BlockService interface {
+	GetBlocks(r *http.Request) ([]model.Block, error)
+	GetBlockByHeight(r *http.Request, height string) (model.Block, error)
+}
+
 type blockService struct {
-	blockRepository model.BlockRepository
+	blockRepository repository.BlockRepository
 	contextTimeout  time.Duration
 }
 
-func NewBlockService(blockRepository model.BlockRepository, timeout time.Duration) model.BlockUseCase {
+func NewBlockService(blockRepository repository.BlockRepository, timeout time.Duration) BlockService {
 	return &blockService{
 		blockRepository,
 		timeout,
 	}
 }
 
-func (bu *blockService) GetBlocks(c *gin.Context) ([]model.Block, error) {
-	page, err := strconv.Atoi(c.DefaultQuery("page", "1"))
-	if err != nil {
-		return nil, err
-	}
-	show, err := strconv.Atoi(c.DefaultQuery("show", "10"))
-	if err != nil {
-		return nil, err
-	}
+func (bu *blockService) GetBlocks(r *http.Request) ([]model.Block, error) {
+	// page, err := strconv.Atoi(c.DefaultQuery("page", "1"))
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// show, err := strconv.Atoi(c.DefaultQuery("show", "10"))
+	// if err != nil {
+	// 	return nil, err
+	// }
 
-	ctx, cancel := context.WithTimeout(c, bu.contextTimeout)
-	defer cancel()
-	return bu.blockRepository.GetBlocks(ctx, int64(page), int64(show))
+	// ctx, cancel := context.WithTimeout(c, bu.contextTimeout)
+	// defer cancel()
+	// return bu.blockRepository.GetBlocks(ctx, int64(page), int64(show))
+	return nil, nil
 }
 
-func (bu *blockService) GetBlockByHeight(c *gin.Context, height string) (model.Block, error) {
-	ctx, cancel := context.WithTimeout(c, bu.contextTimeout)
-	defer cancel()
-	return bu.blockRepository.GetBlockByHeight(ctx, height)
+func (bu *blockService) GetBlockByHeight(r *http.Request, height string) (model.Block, error) {
+	// ctx, cancel := context.WithTimeout(c, bu.contextTimeout)
+	// defer cancel()
+	// return bu.blockRepository.GetBlockByHeight(ctx, height)
+	return model.Block{}, nil
 }

@@ -1,10 +1,7 @@
 package model
 
 import (
-	"context"
-
 	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/gin-gonic/gin"
 )
 
 type Block struct {
@@ -20,19 +17,6 @@ type Block struct {
 	ExtraData  string `json:"extraData"`
 	Hash       string `json:"hash"`
 	ParentHash string `json:"parentHash"`
-}
-
-type BlockRepository interface {
-	GetBlocks(c context.Context, page int64, show int64) ([]Block, error)
-	GetBlockHeights(c context.Context) ([]string, error)
-	GetBlockByHeight(c context.Context, height string) (Block, error)
-	CreateBlock(c context.Context, block *Block) error
-	CreateBlocks(c context.Context, blocks []*Block) error
-}
-
-type BlockUseCase interface {
-	GetBlocks(c *gin.Context) ([]Block, error)
-	GetBlockByHeight(c *gin.Context, height string) (Block, error)
 }
 
 func MakeBlockModelFromTypes(block *types.Block) *Block {

@@ -8,11 +8,19 @@ import (
 	"ethereum-explorer/db"
 )
 
+type BlockRepository interface {
+	GetBlocks(c context.Context, page int64, show int64) ([]model.Block, error)
+	GetBlockHeights(c context.Context) ([]string, error)
+	GetBlockByHeight(c context.Context, height string) (model.Block, error)
+	CreateBlock(c context.Context, block *model.Block) error
+	CreateBlocks(c context.Context, blocks []*model.Block) error
+}
+
 type blockRepository struct {
 	db *db.DB
 }
 
-func NewBlockRepository(db *db.DB) model.BlockRepository {
+func NewBlockRepository(db *db.DB) BlockRepository {
 	return &blockRepository{
 		db,
 	}

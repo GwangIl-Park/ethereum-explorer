@@ -3,18 +3,25 @@ package service
 import (
 	"context"
 	"ethereum-explorer/model"
+	"ethereum-explorer/repository"
 	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
 )
 
+type TransactionService interface {
+	GetTransactions(c *gin.Context) ([]model.Transaction, error)
+	GetTransactionByHash(c context.Context, hash string) (model.Transaction, error)
+	GetTransactionsByAccount(c context.Context, account string) ([]model.Transaction, error)
+}
+
 type transactionService struct {
-	transactionRepository model.TransactionRepository
+	transactionRepository repository.TransactionRepository
 	contextTimeout        time.Duration
 }
 
-func NewTransactionService(transactionRepository model.TransactionRepository, timeout time.Duration) model.TransactionService {
+func NewTransactionService(transactionRepository repository.TransactionRepository, timeout time.Duration) TransactionService {
 	return &transactionService{
 		transactionRepository,
 		timeout,

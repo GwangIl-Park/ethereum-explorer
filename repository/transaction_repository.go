@@ -7,11 +7,19 @@ import (
 	"fmt"
 )
 
+type TransactionRepository interface {
+	GetTransactions(c context.Context, page int64, show int64) ([]model.Transaction, error)
+	GetTransactionByHash(c context.Context, hash string) (model.Transaction, error)
+	GetTransactionsByAccount(c context.Context, account string) ([]model.Transaction, error)
+	CreateTransaction(c context.Context, transaction *model.Transaction) error
+	CreateTransactions(c context.Context, transactions []*model.Transaction) error
+}
+
 type transactionRepository struct {
 	db *db.DB
 }
 
-func NewTransactionRepository(db *db.DB) model.TransactionRepository {
+func NewTransactionRepository(db *db.DB) TransactionRepository {
 	return &transactionRepository{
 		db,
 	}

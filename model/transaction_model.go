@@ -1,12 +1,10 @@
 package model
 
 import (
-	"context"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/gin-gonic/gin"
 )
 
 type Transaction struct {
@@ -21,20 +19,6 @@ type Transaction struct {
 	GasLimit        uint64 `json:"gasLimit"`
 	GasUsed         uint64 `json:"gasUsed"`
 	Input           string `json:"input"`
-}
-
-type TransactionRepository interface {
-	GetTransactions(c context.Context, page int64, show int64) ([]Transaction, error)
-	GetTransactionByHash(c context.Context, hash string) (Transaction, error)
-	GetTransactionsByAccount(c context.Context, account string) ([]Transaction, error)
-	CreateTransaction(c context.Context, transaction *Transaction) error
-	CreateTransactions(c context.Context, transactions []*Transaction) error
-}
-
-type TransactionService interface {
-	GetTransactions(c *gin.Context) ([]Transaction, error)
-	GetTransactionByHash(c context.Context, hash string) (Transaction, error)
-	GetTransactionsByAccount(c context.Context, account string) ([]Transaction, error)
 }
 
 func MakeTransactionModelFromTypes(receipt *types.Receipt, transaction *types.Transaction, block types.Block) (*Transaction, error) {
