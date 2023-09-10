@@ -8,9 +8,8 @@ import (
 )
 
 type TransactionRepository interface {
-	GetTransactions(c context.Context, page int64, show int64) ([]model.Transaction, error)
-	GetTransactionByHash(c context.Context, hash string) (model.Transaction, error)
-	GetTransactionsByAccount(c context.Context, account string) ([]model.Transaction, error)
+	GetTransactions() ([]model.Transaction, error)
+	GetTransactionByHash(hash string) (model.Transaction, error)
 	CreateTransaction(c context.Context, transaction *model.Transaction) error
 	CreateTransactions(c context.Context, transactions []*model.Transaction) error
 }
@@ -25,8 +24,7 @@ func NewTransactionRepository(db *db.DB) TransactionRepository {
 	}
 }
 
-func (tr *transactionRepository) GetTransactions(c context.Context, page int64, show int64) ([]model.Transaction, error) {
-	//opts := options.Find().SetSort(bson.D{{Key: "blockheight",Value: -1}}).SetSkip((page-1) * show).SetLimit(show)
+func (tr *transactionRepository) GetTransactions() ([]model.Transaction, error) {
 	rows, err := tr.db.Client.Query(`SELECT * FROM Transaction`)
 	if err != nil {
 		panic(err)
@@ -46,8 +44,7 @@ func (tr *transactionRepository) GetTransactions(c context.Context, page int64, 
 	return transactions, nil
 }
 
-func (tr *transactionRepository) GetTransactionByHash(c context.Context, hashParam string) (model.Transaction, error) {
-	//cursor := tr.db.Collections["transactions"].FindOne(c, bson.M{"hash":hashParam})
+func (tr *transactionRepository) GetTransactionByHash(hashParam string) (model.Transaction, error) {
 	rows, err := tr.db.Client.Query(`SELECT * FROM Transaction WHERE hash=%s`, hashParam)
 	if err != nil {
 		panic(err)
@@ -60,27 +57,6 @@ func (tr *transactionRepository) GetTransactionByHash(c context.Context, hashPar
 		panic(err)
 	}
 	return transaction, nil
-}
-
-func (tr *transactionRepository) GetTransactionsByAccount(c context.Context, account string) ([]model.Transaction, error) {
-	//cursor, err := tr.db.Collections["transactions"].Find(c, bson.M{"account":account})
-	rows, err := tr.db.Client.Query(`SELECT * FROM Transaction WHERE from=%s OR to=%s`, account)
-	if err != nil {
-		panic(err)
-	}
-	defer rows.Close()
-
-	var transactions []model.Transaction
-	for rows.Next() {
-		var transaction model.Transaction
-		err = rows.Scan(&transaction)
-		if err != nil {
-			panic(err)
-		}
-		transactions = append(transactions, transaction)
-	}
-
-	return transactions, nil
 }
 
 func (tr *transactionRepository) CreateTransaction(c context.Context, transaction *model.Transaction) error {

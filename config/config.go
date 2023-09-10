@@ -8,7 +8,7 @@ import (
 )
 
 type Config struct {
-	Url        string `mapstructure:"url`
+	Url        string `mapstructure:"url"`
 	ChainHttp  string `mapstructure:"chainHttp"`
 	ChainWs    string `mapstructure:"chainWs"`
 	DbHost     string `mapstructure:"dbHost"`

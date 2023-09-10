@@ -1,39 +1,52 @@
 package controller
 
 import (
-	"ethereum-explorer/model"
+	"encoding/json"
+	"ethereum-explorer/logger"
+	"ethereum-explorer/service"
 	"net/http"
 )
 
 type TransactionController struct {
-	TransactionService model.TransactionService
+	TransactionService service.TransactionService
 }
 
 func (tc *TransactionController) GetTransactions(w http.ResponseWriter, r *http.Request) {
-	transactions, err := tc.TransactionService.GetTransactions(c)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, model.ErrorResponse{Message: err.Error()})
+	if r.Method != "GET" {
+		logger.LogMethodNotAllowed(r)
+		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
 	}
-	c.JSON(http.StatusOK, transactions)
+
+	block, err := tc.TransactionService.GetTransactions(r)
+	if err != nil {
+		logger.LogInternalServerError(r, err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(err.Error()))
+		return
+	}
+
+	jsonData, _ := json.Marshal(block)
+
+	w.Write(jsonData)
 }
 
 func (tc *TransactionController) GetTransactionByHash(w http.ResponseWriter, r *http.Request) {
-	hash := c.Param("hash")
-	transaction, err := tc.TransactionService.GetTransactionByHash(c, hash)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, model.ErrorResponse{Message: err.Error()})
+	if r.Method != "GET" {
+		logger.LogMethodNotAllowed(r)
+		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
 	}
-	c.JSON(http.StatusOK, transaction)
-}
 
-func (tc *TransactionController) GetTransactionsByAccount(w http.ResponseWriter, r *http.Request) {
-	account := c.Param("account")
-	transaction, err := tc.TransactionService.GetTransactionsByAccount(c, account)
+	block, err := tc.TransactionService.GetTransactionByHash(r)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, model.ErrorResponse{Message: err.Error()})
+		logger.LogInternalServerError(r, err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(err.Error()))
 		return
 	}
-	c.JSON(http.StatusOK, transaction)
+
+	jsonData, _ := json.Marshal(block)
+
+	w.Write(jsonData)
 }

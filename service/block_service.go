@@ -4,7 +4,6 @@ import (
 	"ethereum-explorer/model"
 	"ethereum-explorer/repository"
 	"net/http"
-	"time"
 )
 
 type BlockService interface {
@@ -16,7 +15,7 @@ type blockService struct {
 	blockRepository repository.BlockRepository
 }
 
-func NewBlockService(blockRepository repository.BlockRepository, timeout time.Duration) BlockService {
+func NewBlockService(blockRepository repository.BlockRepository) BlockService {
 	return &blockService{
 		blockRepository,
 	}

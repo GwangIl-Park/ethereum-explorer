@@ -1,16 +1,11 @@
 package cmd
 
 import (
-	"context"
 	"ethereum-explorer/config"
-	"ethereum-explorer/db"
-	"ethereum-explorer/ethClient"
 	"ethereum-explorer/logger"
-	"ethereum-explorer/routes"
-	"ethereum-explorer/subscriber"
+	"ethereum-explorer/router"
 	"fmt"
 	"log"
-	"math/big"
 	"net/http"
 	"os"
 	"time"
@@ -39,45 +34,46 @@ var rootCmd = &cobra.Command{
 			logger.Logger.WithError(err).Error("NewConfig Error")
 			return err
 		}
+		/*
+			db, err := db.NewDB(context.Background(), *cfg, []string{"blocks", "transactions"})
+			if err != nil {
+				logger.Logger.WithError(err).Error("NewDB Error")
+				return err
+			}
+			defer db.Close()
 
-		db, err := db.NewDB(context.Background(), *cfg, []string{"blocks", "transactions"})
-		if err != nil {
-			logger.Logger.WithError(err).Error("NewDB Error")
-			return err
-		}
-		defer db.Close()
+			timeout := time.Duration(1) * time.Second
 
-		timeout := time.Duration(1) * time.Second
+			ethClient, err := ethClient.NewEthClient(cfg)
+			if err != nil {
+				logger.Logger.WithError(err).Error("NewEthClient Error")
+				return err
+			}
+			defer ethClient.Http.Close()
+			defer ethClient.Ws.Close()
 
-		ethClient, err := ethClient.NewEthClient(cfg)
-		if err != nil {
-			logger.Logger.WithError(err).Error("NewEthClient Error")
-			return err
-		}
-		defer ethClient.Http.Close()
-		defer ethClient.Ws.Close()
+			errorChan := make(chan error)
+			initBlockNumberChan := make(chan *big.Int)
 
+			sub, err := subscriber.NewSubscriber(ethClient, db, errorChan)
+			if err != nil {
+				logger.Logger.WithError(err).Error("NewSubscriber Error")
+				return err
+			}
+
+			go sub.ProcessSubscribe(ethClient, initBlockNumberChan)
+
+			initBlock := <-initBlockNumberChan
+
+			go sub.ProcessPrevious(ethClient, db, initBlock)
+		*/
+		//sv := server.NewServer(db, cfg, ethClient, sub, timeout)
+		sv := server.NewServer(nil, cfg, nil, nil, time.Duration(1)*time.Second)
+
+		r := http.NewServeMux()
+		router.Setup(&sv, r)
 		errorChan := make(chan error)
-		initBlockNumberChan := make(chan *big.Int)
-
-		sub, err := subscriber.NewSubscriber(ethClient, db, errorChan)
-		if err != nil {
-			logger.Logger.WithError(err).Error("NewSubscriber Error")
-			return err
-		}
-
-		go sub.ProcessSubscribe(ethClient, initBlockNumberChan)
-
-		initBlock := <-initBlockNumberChan
-
-		go sub.ProcessPrevious(ethClient, db, initBlock)
-
-		sv := server.NewServer(db, cfg, ethClient, sub, timeout)
-
-		router := http.NewServeMux()
-		routes.Setup(&sv, router)
-
-		go sv.Start(errorChan, router)
+		go sv.Start(errorChan, r)
 
 		err = <-errorChan
 		if err != nil {
@@ -90,8 +86,7 @@ var rootCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.Flags().String("host", "0.0.0.0", "server ip address")
-	rootCmd.Flags().String("port", "5000", "server port")
+	rootCmd.Flags().String("url", "localhost:5000", "server url")
 	rootCmd.Flags().String("chainHttp", "http://localhost:8545", "Chain Http Url")
 	rootCmd.Flags().String("chainWs", "ws://localhost:8546", "Chain Websocket Url")
 	rootCmd.Flags().String("mongoUri", "mongodb://localhost:27017", "Mongo DB URI")

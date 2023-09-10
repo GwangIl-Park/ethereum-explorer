@@ -14,8 +14,8 @@ import (
 type Subscriber struct {
 	headerChan chan *types.Header
 	ethClient  *ethClient.EthClient
-	br         model.BlockRepository
-	tr         model.TransactionRepository
+	br         repository.BlockRepository
+	tr         repository.TransactionRepository
 	errorChan  chan error
 }
 
@@ -106,12 +106,11 @@ func (sub *Subscriber) ProcessSubscribe(ethClient *ethClient.EthClient, initBloc
 }
 
 func (sub *Subscriber) ProcessPrevious(ethClient *ethClient.EthClient, db *dbPackage.DB, initBlock *big.Int) {
-	ctx := context.Background()
 	bigZero := big.NewInt(0)
 	bigOne := big.NewInt(1)
 	var blocks []*types.Block
 
-	blockHeights, err := sub.br.GetBlockHeights(ctx)
+	blockHeights, err := sub.br.GetBlockHeights()
 	if err != nil {
 		sub.errorChan <- err
 	}

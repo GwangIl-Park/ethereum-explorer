@@ -12,9 +12,8 @@ import (
 func NewTransactionRouter(timeout time.Duration, db *db.DB, router *http.ServeMux) {
 	tr := repository.NewTransactionRepository(db)
 	tc := &controller.TransactionController{
-		TransactionService: service.NewTransactionService(tr, timeout),
+		TransactionService: service.NewTransactionService(tr),
 	}
 	router.HandleFunc("/transactions", tc.GetTransactions)
 	router.HandleFunc("/transaction/hash/:hash", tc.GetTransactionByHash)
-	router.HandleFunc("/transaction/account/:account", tc.GetTransactionsByAccount)
 }

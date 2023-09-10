@@ -12,7 +12,7 @@ import (
 func NewBlockRouter(timeout time.Duration, db *db.DB, router *http.ServeMux) {
 	br := repository.NewBlockRepository(db)
 	bc := &controller.BlockController{
-		BlockService: service.NewBlockService(br, timeout),
+		BlockService: service.NewBlockService(br),
 	}
 	router.HandleFunc("/blocks", bc.GetBlocks)
 	router.HandleFunc("/block/:height", bc.GetBlockByHeight)
