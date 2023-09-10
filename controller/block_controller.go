@@ -1,6 +1,9 @@
 package controller
 
 import (
+	"encoding/json"
+	"ethereum-explorer/logger"
+	"ethereum-explorer/service"
 	"net/http"
 
 	"ethereum-explorer/model"
@@ -9,7 +12,7 @@ import (
 )
 
 type BlockController struct {
-	BlockService model.BlockUseCase
+	BlockService service.BlockService
 }
 
 func (bc *BlockController) CreateBlock(c *gin.Context) {
@@ -23,19 +26,41 @@ func (bc *BlockController) CreateBlock(c *gin.Context) {
 }
 
 func (bc *BlockController) GetBlocks(w http.ResponseWriter, r *http.Request) {
-	blocks, err := bc.BlockService.GetBlocks(c)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, model.ErrorResponse{Message: err.Error()})
+	if r.Method != "GET" {
+		logger.LogMethodNotAllowed(r)
+		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
 	}
-	c.JSON(http.StatusOK, blocks)
+
+	blocks, err := bc.BlockService.GetBlocks(r)
+	if err != nil {
+		logger.LogInternalServerError(r, err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(err.Error()))
+		return
+	}
+
+	jsonData, _ := json.Marshal(blocks)
+
+	w.Write(jsonData)
 }
 
 func (bc *BlockController) GetBlockByHeight(w http.ResponseWriter, r *http.Request) {
-	block, err := bc.BlockService.GetBlockByHeight(c, c.Param("height"))
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, model.ErrorResponse{Message: err.Error()})
+	if r.Method != "GET" {
+		logger.LogMethodNotAllowed(r)
+		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
 	}
-	c.JSON(http.StatusOK, block)
+
+	block, err := bc.BlockService.GetBlockByHeight(r)
+	if err != nil {
+		logger.LogInternalServerError(r, err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(err.Error()))
+		return
+	}
+
+	jsonData, _ := json.Marshal(block)
+
+	w.Write(jsonData)
 }

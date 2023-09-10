@@ -9,9 +9,9 @@ import (
 )
 
 type BlockRepository interface {
-	GetBlocks(c context.Context, page int64, show int64) ([]model.Block, error)
-	GetBlockHeights(c context.Context) ([]string, error)
-	GetBlockByHeight(c context.Context, height string) (model.Block, error)
+	GetBlocks() ([]model.Block, error)
+	GetBlockHeights() ([]string, error)
+	GetBlockByHeight(height string) (model.Block, error)
 	CreateBlock(c context.Context, block *model.Block) error
 	CreateBlocks(c context.Context, blocks []*model.Block) error
 }
@@ -26,7 +26,7 @@ func NewBlockRepository(db *db.DB) BlockRepository {
 	}
 }
 
-func (br *blockRepository) GetBlocks(c context.Context, page int64, show int64) ([]model.Block, error) {
+func (br *blockRepository) GetBlocks() ([]model.Block, error) {
 	rows, err := br.db.Client.Query(`SELECT * FROM "Block"`)
 	if err != nil {
 		panic(err)
@@ -47,7 +47,7 @@ func (br *blockRepository) GetBlocks(c context.Context, page int64, show int64) 
 	return blocks, nil
 }
 
-func (br *blockRepository) GetBlockHeights(c context.Context) ([]string, error) {
+func (br *blockRepository) GetBlockHeights() ([]string, error) {
 	rows, err := br.db.Client.Query(`SELECT blockHeight FROM "Block"`)
 	if err != nil {
 		panic(err)
@@ -68,7 +68,7 @@ func (br *blockRepository) GetBlockHeights(c context.Context) ([]string, error) 
 	return blockHeights, nil
 }
 
-func (br *blockRepository) GetBlockByHeight(c context.Context, height string) (model.Block, error) {
+func (br *blockRepository) GetBlockByHeight(height string) (model.Block, error) {
 	rows, err := br.db.Client.Query(`SELECT * FROM "Block" WHERE blockHeight = %s`, height)
 	if err != nil {
 		panic(err)
