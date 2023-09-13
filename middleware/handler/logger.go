@@ -2,25 +2,41 @@ package handler
 
 import (
 	"ethereum-explorer/logger"
+	"fmt"
 	"net/http"
 	"time"
-
-	"github.com/sirupsen/logrus"
 )
+
+type ResponseWriterWrapper struct {
+	http.ResponseWriter
+	body           string
+	statusCode     int
+}
+
+func (rw *ResponseWriterWrapper) Write(data []byte) (int, error) {
+	rw.body = string(data[:])
+	return rw.ResponseWriter.Write(data)
+}
+
+func (rw *ResponseWriterWrapper) WriteHeader(statusCode int) {
+	rw.statusCode = statusCode
+	rw.ResponseWriter.WriteHeader(statusCode)
+}
 
 func GetLoggerHandler(handler http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
+		requestLog := fmt.Sprintf("REQ > [%s] %s", r.Method, r.URL.Path)
+		logger.Logger.Info(requestLog)
+		rw := &ResponseWriterWrapper{
+			ResponseWriter: w,
+		}
 
-		handler.ServeHTTP(w, r)
+		handler.ServeHTTP(rw, r)
 
 		duration := time.Since(start)
 
-		logger.Logger.WithFields(logrus.Fields{
-			"Method":   r.Method,
-			"URI":      r.RequestURI,
-			"Addr":     r.RemoteAddr,
-			"Duration": duration,
-		}).Info("Response")
+		responseLog := fmt.Sprintf("RES > %d [%s] %s %d", rw.statusCode, r.Method, r.URL.Path, duration.Microseconds())
+		logger.Logger.Info(responseLog)
 	})
 }
