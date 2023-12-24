@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"ethereum-explorer/db"
+	"ethereum-explorer/dto"
 	"ethereum-explorer/model"
 	"fmt"
 )
@@ -10,6 +11,7 @@ import (
 type TransactionRepository interface {
 	GetTransactions() ([]model.Transaction, error)
 	GetTransactionByHash(hash string) (model.Transaction, error)
+	GetTransactionsByBlockNumber(blockNumber string) ([]dto.GetTransactionByBlockNumberDTO)
 	CreateTransaction(c context.Context, transaction *model.Transaction) error
 	CreateTransactions(c context.Context, transactions []*model.Transaction) error
 }
@@ -57,6 +59,26 @@ func (tr *transactionRepository) GetTransactionByHash(hashParam string) (model.T
 		panic(err)
 	}
 	return transaction, nil
+}
+
+func (tr *transactionRepository) GetTransactionsByBlockNumber(blockNumber string) ([]dto.GetTransactionByBlockNumberDTO) {
+	rows, err := tr.db.Client.Query(`SELECT txHash, timestamp, from, to, value, txFee FROM transaction WHERE blockNumber = %s`, blockNumber)
+	if err != nil {
+		panic(err)
+	}
+	defer rows.Close()
+
+	var getTransactionsByBlockNumberDTO []dto.GetTransactionByBlockNumberDTO
+	for rows.Next() {
+		var getTransactionByBlockNumberDTO dto.GetTransactionByBlockNumberDTO
+		err = rows.Scan(&getTransactionByBlockNumberDTO)
+		if err != nil {
+			panic(err)
+		}
+		getTransactionsByBlockNumberDTO = append(getTransactionsByBlockNumberDTO, getTransactionByBlockNumberDTO)
+	}
+
+	return getTransactionsByBlockNumberDTO
 }
 
 func (tr *transactionRepository) CreateTransaction(c context.Context, transaction *model.Transaction) error {

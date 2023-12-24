@@ -17,6 +17,7 @@ type Block struct {
 	ExtraData  string `json:"extraData"`
 	Hash       string `json:"hash"`
 	ParentHash string `json:"parentHash"`
+	TransactionCount uint64 `json:"transactionCount"`
 }
 
 func MakeBlockModelFromTypes(block *types.Block) *Block {
