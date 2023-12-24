@@ -1,11 +1,16 @@
 package cmd
 
 import (
+	"context"
 	"ethereum-explorer/config"
+	"ethereum-explorer/db"
+	"ethereum-explorer/ethClient"
 	"ethereum-explorer/logger"
 	"ethereum-explorer/router"
+	"ethereum-explorer/subscriber"
 	"fmt"
 	"log"
+	"math/big"
 	"net/http"
 	"os"
 	"time"
@@ -34,41 +39,40 @@ var rootCmd = &cobra.Command{
 			logger.Logger.WithError(err).Error("NewConfig Error")
 			return err
 		}
-		/*
-			db, err := db.NewDB(context.Background(), *cfg, []string{"blocks", "transactions"})
-			if err != nil {
-				logger.Logger.WithError(err).Error("NewDB Error")
-				return err
-			}
-			defer db.Close()
+		
+		db, err := db.NewDB(context.Background(), *cfg, []string{"blocks", "transactions"})
+		if err != nil {
+			logger.Logger.WithError(err).Error("NewDB Error")
+			return err
+		}
+		defer db.Close()
 
-			timeout := time.Duration(1) * time.Second
+		timeout := time.Duration(1) * time.Second
 
-			ethClient, err := ethClient.NewEthClient(cfg)
-			if err != nil {
-				logger.Logger.WithError(err).Error("NewEthClient Error")
-				return err
-			}
-			defer ethClient.Http.Close()
-			defer ethClient.Ws.Close()
+		ethClient, err := ethClient.NewEthClient(cfg)
+		if err != nil {
+			logger.Logger.WithError(err).Error("NewEthClient Error")
+			return err
+		}
+		defer ethClient.Http.Close()
+		defer ethClient.Ws.Close()
 
-			errorChan := make(chan error)
-			initBlockNumberChan := make(chan *big.Int)
+		errorChan := make(chan error)
+		initBlockNumberChan := make(chan *big.Int)
 
-			sub, err := subscriber.NewSubscriber(ethClient, db, errorChan)
-			if err != nil {
-				logger.Logger.WithError(err).Error("NewSubscriber Error")
-				return err
-			}
+		sub, err := subscriber.NewSubscriber(ethClient, db, errorChan)
+		if err != nil {
+			logger.Logger.WithError(err).Error("NewSubscriber Error")
+			return err
+		}
 
-			go sub.ProcessSubscribe(ethClient, initBlockNumberChan)
+		go sub.ProcessSubscribe(ethClient, initBlockNumberChan)
 
-			initBlock := <-initBlockNumberChan
+		initBlock := <-initBlockNumberChan
 
-			go sub.ProcessPrevious(ethClient, db, initBlock)
-		*/
-		//sv := server.NewServer(db, cfg, ethClient, sub, timeout)
-		sv := server.NewServer(nil, cfg, nil, nil, time.Duration(1)*time.Second)
+		go sub.ProcessPrevious(ethClient, db, initBlock)
+		
+		sv := server.NewServer(db, cfg, ethClient, sub, timeout)
 
 		r := http.NewServeMux()
 		router.Setup(&sv, r)
