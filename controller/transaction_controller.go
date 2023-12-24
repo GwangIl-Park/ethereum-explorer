@@ -11,6 +11,12 @@ type TransactionController struct {
 	TransactionService service.TransactionService
 }
 
+func NewTransactionController(transactionService service.TransactionService) TransactionController {
+	return TransactionController{
+		transactionService,
+	}
+}
+
 func (tc *TransactionController) GetTransactions(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "GET" {
 		logger.LogMethodNotAllowed(r)

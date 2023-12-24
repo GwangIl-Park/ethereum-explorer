@@ -15,6 +15,12 @@ type BlockController struct {
 	BlockService service.BlockService
 }
 
+func NewBlockController(blockService service.BlockService) BlockController {
+	return BlockController{
+		blockService,
+	}
+}
+
 func (bc *BlockController) CreateBlock(c *gin.Context) {
 	var block model.Block
 

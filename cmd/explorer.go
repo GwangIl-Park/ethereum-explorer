@@ -3,10 +3,13 @@ package cmd
 import (
 	"context"
 	"ethereum-explorer/config"
+	"ethereum-explorer/controller"
 	"ethereum-explorer/db"
 	"ethereum-explorer/ethClient"
 	"ethereum-explorer/logger"
+	"ethereum-explorer/repository"
 	"ethereum-explorer/router"
+	"ethereum-explorer/service"
 	"ethereum-explorer/subscriber"
 	"fmt"
 	"log"
@@ -75,8 +78,27 @@ var rootCmd = &cobra.Command{
 		sv := server.NewServer(db, cfg, ethClient, sub, timeout)
 
 		r := http.NewServeMux()
-		router.Setup(&sv, r)
-		errorChan := make(chan error)
+
+		accountRepository := repository.NewAccountRepository(db)
+		blockRepository := repository.NewBlockRepository(db)
+		mainRepository := repository.NewMainRepository(db)
+		transactionRepository := repository.NewTransactionRepository(db)
+
+		accountService := service.NewAccountService(accountRepository)
+		blockService := service.NewBlockService(blockRepository)
+		mainService := service.NewMainService(mainRepository)
+		transactionService := service.NewTransactionService(transactionRepository)
+
+		accountController := controller.NewAccountController(accountService)
+		blockController := controller.NewBlockController(blockService)
+		mainController := controller.NewMainController(mainService)
+		transactionController := controller.NewTransactionController(transactionService)
+
+		router.NewAccountRouter(sv.Timeout, accountController, r)
+		router.NewBlockRouter(sv.Timeout, blockController, r)
+		router.NewMainRouter(sv.Timeout, mainController, r)
+		router.NewTransactionRouter(sv.Timeout, transactionController, r)
+
 		go sv.Start(errorChan, r)
 
 		err = <-errorChan
