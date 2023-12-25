@@ -5,7 +5,7 @@ import (
 	dbPackage "ethereum-explorer/db"
 	"ethereum-explorer/ethClient"
 	"ethereum-explorer/model"
-	"ethereum-explorer/repository"
+	"ethereum-explorer/service"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/core/types"
@@ -14,22 +14,19 @@ import (
 type Subscriber struct {
 	headerChan chan *types.Header
 	ethClient  *ethClient.EthClient
-	br         repository.BlockRepository
-	tr         repository.TransactionRepository
+	bs				 service.BlockService
+	ts         service.TransactionService
 	errorChan  chan error
 }
 
-func NewSubscriber(ethClient *ethClient.EthClient, db *dbPackage.DB, errorChan chan error) (*Subscriber, error) {
-	br := repository.NewBlockRepository(db)
-	tr := repository.NewTransactionRepository(db)
-
+func NewSubscriber(ethClient *ethClient.EthClient, blockService service.BlockService, transactionService service.TransactionService, errorChan chan error) (*Subscriber, error) {
 	headerChan := make(chan *types.Header)
 
 	return &Subscriber{
 		headerChan,
 		ethClient,
-		br,
-		tr,
+		blockService,
+		transactionService,
 		errorChan,
 	}, nil
 }
@@ -61,14 +58,14 @@ func (sub *Subscriber) insertNewBlocks(blocks []*types.Block) {
 	}
 
 	if len(transactionmodel) > 0 {
-		err := sub.tr.CreateTransactions(ctx, transactionmodel)
+		err := sub.ts.CreateTransactions(transactionmodel)
 		if err != nil {
 			sub.errorChan <- err
 			return
 		}
 	}
 
-	err := sub.br.CreateBlocks(ctx, blockmodel)
+	err := sub.bs.CreateBlocks(blockmodel)
 	if err != nil {
 		sub.errorChan <- err
 		return
@@ -110,11 +107,12 @@ func (sub *Subscriber) ProcessPrevious(ethClient *ethClient.EthClient, db *dbPac
 	bigOne := big.NewInt(1)
 	var blocks []*types.Block
 
-	blockHeights, err := sub.br.GetBlockHeights()
+	blockHeightsDTO, err := sub.bs.GetBlockHeights()
 	if err != nil {
 		sub.errorChan <- err
 	}
 
+	blockHeights := blockHeightsDTO.Heights
 	blockHeightsMap := make(map[*big.Int]bool)
 	for _, blockHeight := range blockHeights {
 		num := new(big.Int)

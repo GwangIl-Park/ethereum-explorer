@@ -1,7 +1,6 @@
 package repository
 
 import (
-	"context"
 	"ethereum-explorer/dto"
 	"ethereum-explorer/model"
 	"fmt"
@@ -13,8 +12,8 @@ type BlockRepository interface {
 	GetBlocks() (*dto.GetBlocksDTO, error)
 	GetBlockHeights() (*dto.GetBlockHeightsDTO, error)
 	GetBlockByHeight(height string) (*dto.GetBlockByHeightDTO, error)
-	CreateBlock(c context.Context, block *model.Block) error
-	CreateBlocks(c context.Context, blocks []*model.Block) error
+	CreateBlock(block *model.Block) error
+	CreateBlocks(blocks []*model.Block) error
 }
 
 type blockRepository struct {
@@ -87,7 +86,7 @@ func (br *blockRepository) GetBlockByHeight(height string) (*dto.GetBlockByHeigh
 	return getBlockByHeightDTO, nil
 }
 
-func (br *blockRepository) CreateBlock(c context.Context, block *model.Block) error {
+func (br *blockRepository) CreateBlock(block *model.Block) error {
 
 	valuesStr := fmt.Sprintf("(%s,%v,%s,%v,%v,%v,%s,%s,%s,%s)",
 		block.BlockHeight,
@@ -109,7 +108,7 @@ func (br *blockRepository) CreateBlock(c context.Context, block *model.Block) er
 	return nil
 }
 
-func (br *blockRepository) CreateBlocks(c context.Context, blocks []*model.Block) error {
+func (br *blockRepository) CreateBlocks(blocks []*model.Block) error {
 	var valuesStr string
 
 	for _, block := range blocks {

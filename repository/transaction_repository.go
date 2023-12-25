@@ -1,7 +1,6 @@
 package repository
 
 import (
-	"context"
 	"ethereum-explorer/db"
 	"ethereum-explorer/dto"
 	"ethereum-explorer/model"
@@ -12,8 +11,8 @@ type TransactionRepository interface {
 	GetTransactions() (*dto.GetTransactionsDTO, error)
 	GetTransactionByHash(hash string) (*dto.GetTransactionsByHashDTO, error)
 	GetTransactionsByBlockNumber(blockNumber string) (*dto.GetTransactionsByBlockNumberDTO, error)
-	CreateTransaction(c context.Context, transaction *model.Transaction) error
-	CreateTransactions(c context.Context, transactions []*model.Transaction) error
+	CreateTransaction(transaction *model.Transaction) error
+	CreateTransactions(transactions []*model.Transaction) error
 }
 
 type transactionRepository struct {
@@ -83,7 +82,7 @@ func (tr *transactionRepository) GetTransactionsByBlockNumber(blockNumber string
 	return getTransactionsByBlockNumberDTO, nil
 }
 
-func (tr *transactionRepository) CreateTransaction(c context.Context, transaction *model.Transaction) error {
+func (tr *transactionRepository) CreateTransaction(transaction *model.Transaction) error {
 	valuesStr := fmt.Sprintf("(%s,%t,%s,%s,%s,%s,%s,%s,%v,%v,%s)",
 		transaction.TransactionHash,
 		transaction.Status,
@@ -105,7 +104,7 @@ func (tr *transactionRepository) CreateTransaction(c context.Context, transactio
 	return nil
 }
 
-func (tr *transactionRepository) CreateTransactions(c context.Context, transactions []*model.Transaction) error {
+func (tr *transactionRepository) CreateTransactions(transactions []*model.Transaction) error {
 	var valuesStr string
 
 	for _, transaction := range transactions {

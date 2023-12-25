@@ -5,13 +5,16 @@ import (
 	"ethereum-explorer/config"
 	"ethereum-explorer/controller"
 	"ethereum-explorer/db"
+	"ethereum-explorer/ethClient"
 	"ethereum-explorer/logger"
 	"ethereum-explorer/repository"
 	"ethereum-explorer/router"
 	"ethereum-explorer/server"
 	"ethereum-explorer/service"
+	"ethereum-explorer/subscriber"
 	"fmt"
 	"log"
+	"math/big"
 	"net/http"
 	"os"
 	"time"
@@ -48,39 +51,16 @@ var rootCmd = &cobra.Command{
 
 		timeout := time.Duration(1) * time.Second
 
-		// ethClient, err := ethClient.NewEthClient(cfg)
-		// if err != nil {
-		// 	logger.Logger.WithError(err).Error("NewEthClient Error")
-		// 	return err
-		// }
-		// defer ethClient.Http.Close()
-		// defer ethClient.Ws.Close()
-
-		// errorChan := make(chan error)
-		// initBlockNumberChan := make(chan *big.Int)
-
-		// sub, err := subscriber.NewSubscriber(ethClient, db, errorChan)
-		// if err != nil {
-		// 	logger.Logger.WithError(err).Error("NewSubscriber Error")
-		// 	return err
-		// }
-
-		// go sub.ProcessSubscribe(ethClient, initBlockNumberChan)
-
-		// initBlock := <-initBlockNumberChan
-
-		// go sub.ProcessPrevious(ethClient, db, initBlock)
-
-		// sv := server.NewServer(db, cfg, ethClient, sub, timeout)
-		
-		sv := server.NewServer(db, cfg, nil, nil, timeout)
+		ethClient, err := ethClient.NewEthClient(cfg)
+		if err != nil {
+			logger.Logger.WithError(err).Error("NewEthClient Error")
+			return err
+		}
+		defer ethClient.Http.Close()
+		defer ethClient.Ws.Close()
 
 		r := http.NewServeMux()
-
-		errr:=db.Client.Ping()
-		if errr != nil {
-			fmt.Println(errr)
-		}
+		
 		accountRepository := repository.NewAccountRepository(db)
 		blockRepository := repository.NewBlockRepository(db)
 		mainRepository := repository.NewMainRepository(db)
@@ -96,11 +76,28 @@ var rootCmd = &cobra.Command{
 		mainController := controller.NewMainController(mainService)
 		transactionController := controller.NewTransactionController(transactionService)
 
-		router.NewAccountRouter(sv.Timeout, accountController, r)
-		router.NewBlockRouter(sv.Timeout, blockController, r)
-		router.NewMainRouter(sv.Timeout, mainController, r)
-		router.NewTransactionRouter(sv.Timeout, transactionController, r)
+		router.NewAccountRouter(accountController, r)
+		router.NewBlockRouter(blockController, r)
+		router.NewMainRouter(mainController, r)
+		router.NewTransactionRouter(transactionController, r)
+
 		errorChan := make(chan error)
+		initBlockNumberChan := make(chan *big.Int)
+
+		sub, err := subscriber.NewSubscriber(ethClient, blockService, transactionService, errorChan)
+		if err != nil {
+			logger.Logger.WithError(err).Error("NewSubscriber Error")
+			return err
+		}
+
+		go sub.ProcessSubscribe(ethClient, initBlockNumberChan)
+
+		initBlock := <-initBlockNumberChan
+
+		go sub.ProcessPrevious(ethClient, db, initBlock)
+
+		sv := server.NewServer(db, cfg, ethClient, sub, timeout)
+		
 		go sv.Start(errorChan, r)
 
 		err = <-errorChan
@@ -119,10 +116,10 @@ func init() {
 	rootCmd.Flags().String("chainWs", "ws://localhost:8546", "Chain Websocket Url")
 	rootCmd.Flags().String("mongoUri", "mongodb://localhost:27017", "Mongo DB URI")
 	rootCmd.Flags().String("dbHost", "localhost", "DB Host")
-	rootCmd.Flags().String("dbPort", "localhost", "DB Host")
-	rootCmd.Flags().String("dbUser", "localhost", "DB Host")
-	rootCmd.Flags().String("dbPassword", "localhost", "DB Host")
-	rootCmd.Flags().String("dbName", "localhost", "DB Host")
+	rootCmd.Flags().String("dbPort", "5432", "DB Port")
+	rootCmd.Flags().String("dbUser", "postgres", "DB User")
+	rootCmd.Flags().String("dbPassword", "", "DB Password")
+	rootCmd.Flags().String("dbName", "", "DB Name")
 	rootCmd.Flags().Int64("startBlock", 0, "explorer start block")
 	rootCmd.Flags().StringVar(&verbosity, "verbosity", "info", "Verbosity Level [debug, info, warn, error]")
 
