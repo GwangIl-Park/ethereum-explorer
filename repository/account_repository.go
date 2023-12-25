@@ -3,7 +3,6 @@ package repository
 import (
 	"ethereum-explorer/db"
 	"ethereum-explorer/dto"
-	"fmt"
 )
 
 type AccountRepository interface {
@@ -21,7 +20,6 @@ func NewAccountRepository(db *db.DB) AccountRepository {
 }
 
 func (ar *accountRepository) GetAccountByAddress(address string) (*dto.GetAccountByAddressDTO, error) {
-	fmt.Println(address)
 	accountRow, err := ar.db.Client.Query(`SELECT address, balance FROM account WHERE address = $1`, address)
 	if err != nil {
 		return nil, err
@@ -34,9 +32,9 @@ func (ar *accountRepository) GetAccountByAddress(address string) (*dto.GetAccoun
 	}
 	defer txRows.Close()
 
-	var getAccountByAddressDTO dto.GetAccountByAddressDTO
+	var getAccountByAddressDTO *dto.GetAccountByAddressDTO
 	for accountRow.Next() {
-		err = accountRow.Scan(&getAccountByAddressDTO.Address, &getAccountByAddressDTO.Balance)
+		err = accountRow.Scan(&getAccountByAddressDTO.GetAccountByAddressResult.Address, &getAccountByAddressDTO.GetAccountByAddressResult.Balance)
 		if err != nil {
 			return nil, err
 		}
@@ -48,7 +46,7 @@ func (ar *accountRepository) GetAccountByAddress(address string) (*dto.GetAccoun
 		if err != nil {
 			return nil, err
 		}
-		getAccountByAddressDTO.TxList = append(getAccountByAddressDTO.TxList, transactionOfAccount)
+		getAccountByAddressDTO.GetAccountByAddressResult.TxList = append(getAccountByAddressDTO.GetAccountByAddressResult.TxList, transactionOfAccount)
 	}
-	return &getAccountByAddressDTO, nil
+	return getAccountByAddressDTO, nil
 }

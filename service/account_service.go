@@ -3,11 +3,10 @@ package service
 import (
 	"ethereum-explorer/dto"
 	"ethereum-explorer/repository"
-	"net/http"
 )
 
 type AccountService interface {
-	GetAccountByAddress(r *http.Request) (*dto.GetAccountByAddressDTO, error)
+	GetAccountByAddress(address string) (*dto.GetAccountByAddressDTO, error)
 }
 
 type accountService struct {
@@ -20,7 +19,6 @@ func NewAccountService(accountRepository repository.AccountRepository) AccountSe
 	}
 }
 
-func(as *accountService) GetAccountByAddress(r *http.Request) (*dto.GetAccountByAddressDTO, error) {
-	address := r.RequestURI[len("/address/"):]
+func(as *accountService) GetAccountByAddress(address string) (*dto.GetAccountByAddressDTO, error) {
 	return as.accountRepository.GetAccountByAddress(address)
 }

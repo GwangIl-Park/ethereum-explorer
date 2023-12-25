@@ -1,15 +1,14 @@
 package service
 
 import (
-	"ethereum-explorer/model"
+	"ethereum-explorer/dto"
 	"ethereum-explorer/repository"
-	"net/http"
 )
 
 type BlockService interface {
-	GetBlocks(r *http.Request) (*[]model.Block, error)
-	GetBlockHeights(r *http.Request) (*[]string, error)
-	GetBlockByHeight(r *http.Request) (*model.Block, error)
+	GetBlocks() (*dto.GetBlocksDTO, error)
+	GetBlockHeights() (*dto.GetBlockHeightsDTO, error)
+	GetBlockByHeight(height string) (*dto.GetBlockByHeightDTO, error)
 }
 
 type blockService struct {
@@ -22,15 +21,14 @@ func NewBlockService(blockRepository repository.BlockRepository) BlockService {
 	}
 }
 
-func (bs *blockService) GetBlocks(r *http.Request) (*[]model.Block, error) {
+func (bs *blockService) GetBlocks() (*dto.GetBlocksDTO, error) {
 	return bs.blockRepository.GetBlocks()
 }
 
-func (bs *blockService) GetBlockHeights(r *http.Request) (*[]string, error) {
+func (bs *blockService) GetBlockHeights() (*dto.GetBlockHeightsDTO, error) {
 	return bs.blockRepository.GetBlockHeights()
 }
 
-func (bs *blockService) GetBlockByHeight(r *http.Request) (*model.Block, error) {
-	height := r.RequestURI[len("/block/"):]
+func (bs *blockService) GetBlockByHeight(height string) (*dto.GetBlockByHeightDTO, error) {
 	return bs.blockRepository.GetBlockByHeight(height)
 }

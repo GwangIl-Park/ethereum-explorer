@@ -2,15 +2,13 @@ package service
 
 import (
 	"ethereum-explorer/dto"
-	"ethereum-explorer/model"
 	"ethereum-explorer/repository"
-	"net/http"
 )
 
 type TransactionService interface {
-	GetTransactions(r *http.Request) (*[]model.Transaction, error)
-	GetTransactionByHash(r *http.Request) (*model.Transaction, error)
-	GetTransactionsByBlockNumber(r *http.Request) (*[]dto.GetTransactionByBlockNumberDTO, error)
+	GetTransactions() (*dto.GetTransactionsDTO, error)
+	GetTransactionByHash(txHash string) (*dto.GetTransactionsByHashDTO, error)
+	GetTransactionsByBlockNumber(blockNumber string) (*dto.GetTransactionsByBlockNumberDTO, error)
 }
 
 type transactionService struct {
@@ -23,16 +21,14 @@ func NewTransactionService(transactionRepository repository.TransactionRepositor
 	}
 }
 
-func (tu *transactionService) GetTransactions(r *http.Request) (*[]model.Transaction, error) {
+func (tu *transactionService) GetTransactions() (*dto.GetTransactionsDTO, error) {
 	return tu.transactionRepository.GetTransactions()
 }
 
-func (tu *transactionService) GetTransactionByHash(r *http.Request) (*model.Transaction, error) {
-	hash := r.RequestURI[len("/transaction/"):]
-	return tu.transactionRepository.GetTransactionByHash(hash)
+func (tu *transactionService) GetTransactionByHash(txHash string) (*dto.GetTransactionsByHashDTO, error) {
+	return tu.transactionRepository.GetTransactionByHash(txHash)
 }
 
-func (tu *transactionService) GetTransactionsByBlockNumber(r *http.Request) (*[]dto.GetTransactionByBlockNumberDTO, error) {
-	blockNumber := r.URL.Query().Get("blocknumber")
+func (tu *transactionService) GetTransactionsByBlockNumber(blockNumber string) (*dto.GetTransactionsByBlockNumberDTO, error) {
 	return tu.transactionRepository.GetTransactionsByBlockNumber(blockNumber)
 }

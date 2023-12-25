@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"ethereum-explorer/dto"
 	"ethereum-explorer/model"
 	"fmt"
 
@@ -9,9 +10,9 @@ import (
 )
 
 type BlockRepository interface {
-	GetBlocks() (*[]model.Block, error)
-	GetBlockHeights() (*[]string, error)
-	GetBlockByHeight(height string) (*model.Block, error)
+	GetBlocks() (*dto.GetBlocksDTO, error)
+	GetBlockHeights() (*dto.GetBlockHeightsDTO, error)
+	GetBlockByHeight(height string) (*dto.GetBlockByHeightDTO, error)
 	CreateBlock(c context.Context, block *model.Block) error
 	CreateBlocks(c context.Context, blocks []*model.Block) error
 }
@@ -26,7 +27,7 @@ func NewBlockRepository(db *db.DB) BlockRepository {
 	}
 }
 
-func (br *blockRepository) GetBlocks() (*[]model.Block, error) {
+func (br *blockRepository) GetBlocks() (*dto.GetBlocksDTO, error) {
 	rows, err := br.db.Client.Query(`SELECT * FROM "Block"`)
 	if err != nil {
 		return nil, err
@@ -34,20 +35,20 @@ func (br *blockRepository) GetBlocks() (*[]model.Block, error) {
 
 	defer rows.Close()
 
-	var blocks []model.Block
+	var getBlocksDTO *dto.GetBlocksDTO
 	for rows.Next() {
-		var block model.Block
+		var block dto.Block
 		err = rows.Scan(&block)
 		if err != nil {
 			return nil, err
 		}
-		blocks = append(blocks, block)
+		getBlocksDTO.Blocks = append(getBlocksDTO.Blocks, block)
 	}
 
-	return &blocks, nil
+	return getBlocksDTO, nil
 }
 
-func (br *blockRepository) GetBlockHeights() (*[]string, error) {
+func (br *blockRepository) GetBlockHeights() (*dto.GetBlockHeightsDTO, error) {
 	rows, err := br.db.Client.Query(`SELECT blockHeight FROM "Block"`)
 	if err != nil {
 		return nil, err
@@ -55,33 +56,35 @@ func (br *blockRepository) GetBlockHeights() (*[]string, error) {
 
 	defer rows.Close()
 
-	var blockHeights []string
+	var getBlockHeightsDTO *dto.GetBlockHeightsDTO
 	for rows.Next() {
 		var blockHeight string
 		err = rows.Scan(&blockHeight)
 		if err != nil {
 			return nil, err
 		}
-		blockHeights = append(blockHeights, blockHeight)
+		getBlockHeightsDTO.Heights = append(getBlockHeightsDTO.Heights, blockHeight)
 	}
 
-	return &blockHeights, nil
+	return getBlockHeightsDTO, nil
 }
 
-func (br *blockRepository) GetBlockByHeight(height string) (*model.Block, error) {
+func (br *blockRepository) GetBlockByHeight(height string) (*dto.GetBlockByHeightDTO, error) {
 	rows, err := br.db.Client.Query(`SELECT * FROM "Block" WHERE blockHeight = %s`, height)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	var block model.Block
-	err = rows.Scan(&block)
-	if err != nil {
-		return nil, err
+	var getBlockByHeightDTO *dto.GetBlockByHeightDTO
+	for rows.Next() {
+		err = rows.Scan(&getBlockByHeightDTO.Block)
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	return &block, nil
+	return getBlockByHeightDTO, nil
 }
 
 func (br *blockRepository) CreateBlock(c context.Context, block *model.Block) error {

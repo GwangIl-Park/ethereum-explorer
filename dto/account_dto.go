@@ -10,8 +10,16 @@ type TransactionOfAccount struct {
 	Fee string
 }
 
-type GetAccountByAddressDTO struct {
+type GetAccountByAddressResult struct {
 	Address string
 	Balance uint64
 	TxList []TransactionOfAccount
+}
+
+type GetAccountByAddressDTO struct {
+	GetAccountByAddressResult GetAccountByAddressResult
+}
+
+func (gabaDTO GetAccountByAddressDTO) GetDTO() interface{} {
+	return gabaDTO
 }

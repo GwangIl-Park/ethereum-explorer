@@ -1,7 +1,7 @@
 package controller
 
 import (
-	"encoding/json"
+	"ethereum-explorer/httpResponse"
 	"ethereum-explorer/logger"
 	"ethereum-explorer/service"
 	"net/http"
@@ -24,15 +24,11 @@ func (mc *MainController) GetAccountByGetInformationForMainAddress(w http.Respon
 		return
 	}
 
-	main, err := mc.MainService.GetInformationForMain(r)
+	responseData, err := mc.MainService.GetInformationForMain()
 	if err != nil {
-		logger.LogInternalServerError(r, err)
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(err.Error()))
+		httpResponse.ErrorResponse(w, r, err)
 		return
 	}
 
-	jsonData, _ := json.Marshal(main)
-
-	w.Write(jsonData)
+	httpResponse.SendResponse(w, responseData)
 }

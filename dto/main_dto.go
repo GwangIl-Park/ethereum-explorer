@@ -19,3 +19,7 @@ type GetInformationForMainDTO struct {
 	LatestBlockList []BlockForMain
 	LatestTransactionList []TransactionForMain
 }
+
+func (gifmDTO GetInformationForMainDTO) GetDTO() interface{} {
+	return gifmDTO
+}

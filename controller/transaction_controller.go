@@ -1,7 +1,7 @@
 package controller
 
 import (
-	"encoding/json"
+	"ethereum-explorer/httpResponse"
 	"ethereum-explorer/logger"
 	"ethereum-explorer/service"
 	"net/http"
@@ -24,17 +24,23 @@ func (tc *TransactionController) GetTransactions(w http.ResponseWriter, r *http.
 		return
 	}
 
-	block, err := tc.TransactionService.GetTransactions(r)
-	if err != nil {
-		logger.LogInternalServerError(r, err)
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(err.Error()))
-		return
+	blockNumber := r.URL.Query().Get("blocknumber")
+	if blockNumber != "" {
+		responseData, err := tc.TransactionService.GetTransactionsByBlockNumber(blockNumber)
+		if err != nil {
+			httpResponse.ErrorResponse(w, r, err)
+			return
+		}
+
+		httpResponse.SendResponse(w, responseData)
+	} else {
+		responseData, err := tc.TransactionService.GetTransactions()
+		if err != nil {
+			httpResponse.ErrorResponse(w, r, err)
+			return
+		}
+		httpResponse.SendResponse(w, responseData)
 	}
-
-	jsonData, _ := json.Marshal(block)
-
-	w.Write(jsonData)
 }
 
 func (tc *TransactionController) GetTransactionByHash(w http.ResponseWriter, r *http.Request) {
@@ -44,15 +50,12 @@ func (tc *TransactionController) GetTransactionByHash(w http.ResponseWriter, r *
 		return
 	}
 
-	block, err := tc.TransactionService.GetTransactionByHash(r)
+	txHash := r.RequestURI[len("/transaction/"):]
+
+	responseData, err := tc.TransactionService.GetTransactionByHash(txHash)
 	if err != nil {
-		logger.LogInternalServerError(r, err)
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(err.Error()))
-		return
+		httpResponse.ErrorResponse(w, r, err)
 	}
-
-	jsonData, _ := json.Marshal(block)
-
-	w.Write(jsonData)
+	
+	httpResponse.SendResponse(w, responseData)
 }

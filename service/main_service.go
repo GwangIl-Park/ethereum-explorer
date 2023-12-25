@@ -3,11 +3,10 @@ package service
 import (
 	"ethereum-explorer/dto"
 	"ethereum-explorer/repository"
-	"net/http"
 )
 
 type MainService interface {
-	GetInformationForMain(r *http.Request) (*dto.GetInformationForMainDTO, error)
+	GetInformationForMain() (*dto.GetInformationForMainDTO, error)
 }
 
 type mainService struct {
@@ -20,6 +19,6 @@ func NewMainService(mainRepository repository.MainRepository) MainService {
 	}
 }
 
-func(ms *mainService) GetInformationForMain(r *http.Request) (*dto.GetInformationForMainDTO, error) {
+func(ms *mainService) GetInformationForMain() (*dto.GetInformationForMainDTO, error) {
 	return ms.mainRepository.GetInformationForMain()
 }

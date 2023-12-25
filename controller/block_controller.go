@@ -1,7 +1,7 @@
 package controller
 
 import (
-	"encoding/json"
+	"ethereum-explorer/httpResponse"
 	"ethereum-explorer/logger"
 	"ethereum-explorer/service"
 	"net/http"
@@ -38,17 +38,13 @@ func (bc *BlockController) GetBlocks(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	blocks, err := bc.BlockService.GetBlocks(r)
+	responseData, err := bc.BlockService.GetBlocks()
 	if err != nil {
-		logger.LogInternalServerError(r, err)
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(err.Error()))
+		httpResponse.ErrorResponse(w, r, err)
 		return
 	}
 
-	jsonData, _ := json.Marshal(blocks)
-
-	w.Write(jsonData)
+	httpResponse.SendResponse(w, responseData)
 }
 
 func (bc *BlockController) GetBlockByHeight(w http.ResponseWriter, r *http.Request) {
@@ -57,16 +53,13 @@ func (bc *BlockController) GetBlockByHeight(w http.ResponseWriter, r *http.Reque
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
 	}
+	height := r.RequestURI[len("/block/"):]
 
-	block, err := bc.BlockService.GetBlockByHeight(r)
+	responseData, err := bc.BlockService.GetBlockByHeight(height)
 	if err != nil {
-		logger.LogInternalServerError(r, err)
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(err.Error()))
+		httpResponse.ErrorResponse(w, r, err)
 		return
 	}
 
-	jsonData, _ := json.Marshal(block)
-
-	w.Write(jsonData)
+	httpResponse.SendResponse(w, responseData)
 }
