@@ -5,15 +5,12 @@ import (
 	"ethereum-explorer/config"
 	"ethereum-explorer/controller"
 	"ethereum-explorer/db"
-	"ethereum-explorer/ethClient"
 	"ethereum-explorer/logger"
 	"ethereum-explorer/repository"
 	"ethereum-explorer/router"
 	"ethereum-explorer/service"
-	"ethereum-explorer/subscriber"
 	"fmt"
 	"log"
-	"math/big"
 	"net/http"
 	"os"
 	"time"
@@ -51,7 +48,7 @@ var rootCmd = &cobra.Command{
 		defer db.Close()
 
 		timeout := time.Duration(1) * time.Second
-
+/*
 		ethClient, err := ethClient.NewEthClient(cfg)
 		if err != nil {
 			logger.Logger.WithError(err).Error("NewEthClient Error")
@@ -74,8 +71,10 @@ var rootCmd = &cobra.Command{
 		initBlock := <-initBlockNumberChan
 
 		go sub.ProcessPrevious(ethClient, db, initBlock)
-		
+
 		sv := server.NewServer(db, cfg, ethClient, sub, timeout)
+		*/
+		sv := server.NewServer(db, cfg, nil, nil, timeout)
 
 		r := http.NewServeMux()
 
@@ -98,7 +97,7 @@ var rootCmd = &cobra.Command{
 		router.NewBlockRouter(sv.Timeout, blockController, r)
 		router.NewMainRouter(sv.Timeout, mainController, r)
 		router.NewTransactionRouter(sv.Timeout, transactionController, r)
-
+		errorChan := make(chan error)
 		go sv.Start(errorChan, r)
 
 		err = <-errorChan
@@ -116,6 +115,11 @@ func init() {
 	rootCmd.Flags().String("chainHttp", "http://localhost:8545", "Chain Http Url")
 	rootCmd.Flags().String("chainWs", "ws://localhost:8546", "Chain Websocket Url")
 	rootCmd.Flags().String("mongoUri", "mongodb://localhost:27017", "Mongo DB URI")
+	rootCmd.Flags().String("dbHost", "localhost", "DB Host")
+	rootCmd.Flags().String("dbPort", "localhost", "DB Host")
+	rootCmd.Flags().String("dbUser", "localhost", "DB Host")
+	rootCmd.Flags().String("dbPassword", "localhost", "DB Host")
+	rootCmd.Flags().String("dbName", "localhost", "DB Host")
 	rootCmd.Flags().Int64("startBlock", 0, "explorer start block")
 	rootCmd.Flags().StringVar(&verbosity, "verbosity", "info", "Verbosity Level [debug, info, warn, error]")
 

@@ -7,5 +7,5 @@ import (
 )
 
 func NewMainRouter(timeout time.Duration, mainController controller.MainController, router *http.ServeMux) {
-
+	router.HandleFunc("/", mainController.GetAccountByGetInformationForMainAddress)
 }

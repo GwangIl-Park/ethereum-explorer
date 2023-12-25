@@ -71,7 +71,7 @@ func (br *blockRepository) GetBlockHeights() ([]string, error) {
 func (br *blockRepository) GetBlockByHeight(height string) (model.Block, error) {
 	rows, err := br.db.Client.Query(`SELECT * FROM "Block" WHERE blockHeight = %s`, height)
 	if err != nil {
-		panic(err)
+		return model.Block{}, err
 	}
 
 	defer rows.Close()
@@ -79,7 +79,7 @@ func (br *blockRepository) GetBlockByHeight(height string) (model.Block, error) 
 	var block model.Block
 	err = rows.Scan(&block)
 	if err != nil {
-		panic(err)
+		return model.Block{}, err
 	}
 
 	return block, nil

@@ -6,7 +6,7 @@ import (
 )
 
 type MainRepository interface {
-	GetInformationForMain() (dto.GetInformationForMainDTO)
+	GetInformationForMain() (dto.GetInformationForMainDTO, error)
 }
 
 type mainRepository struct {
@@ -19,27 +19,26 @@ func NewMainRepository(db *db.DB) MainRepository {
 	}
 }
 
-func (mr *mainRepository) GetInformationForMain() (dto.GetInformationForMainDTO) {
+func (mr *mainRepository) GetInformationForMain() (dto.GetInformationForMainDTO, error) {
 	blockRows, err := mr.db.Client.Query(`SELECT blocknumber, timestamp, feeRecipient, blockReward FROM block LIMIT 6`)
 	if err != nil {
-		panic(err)
+		return dto.GetInformationForMainDTO{}, nil
 	}
 	defer blockRows.Close()
 
 	transactionRows, err := mr.db.Client.Query(`SELECT txHash, from, to, value FROM transaction LIMIT 6`)
 	if err != nil {
-		panic(err)
+		return dto.GetInformationForMainDTO{}, nil
 	}
 	defer transactionRows.Close()
 
 	var getInformationForMain dto.GetInformationForMainDTO
 
-
 	for blockRows.Next() {
 		var blockForMain dto.BlockForMain
 		err = blockRows.Scan(&blockForMain)
 		if err != nil {
-			panic(err)
+			return dto.GetInformationForMainDTO{}, nil
 		}
 		getInformationForMain.LatestBlockList = append(getInformationForMain.LatestBlockList, blockForMain)
 	}
@@ -48,10 +47,10 @@ func (mr *mainRepository) GetInformationForMain() (dto.GetInformationForMainDTO)
 		var transactionForMain dto.TransactionForMain
 		err = transactionRows.Scan(&transactionForMain)
 		if err != nil {
-			panic(err)
+			return dto.GetInformationForMainDTO{}, nil
 		}
 		getInformationForMain.LatestTransactionList = append(getInformationForMain.LatestTransactionList, transactionForMain)
 	}
 
-	return getInformationForMain
+	return getInformationForMain, nil
 }

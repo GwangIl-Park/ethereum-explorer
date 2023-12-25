@@ -7,4 +7,5 @@ import (
 )
 
 func NewAccountRouter(timeout time.Duration, accountController controller.AccountController, router *http.ServeMux) {
+	router.HandleFunc("/address/:address", accountController.GetAccountByAddress)
 }
