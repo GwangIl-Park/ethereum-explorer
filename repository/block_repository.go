@@ -9,9 +9,9 @@ import (
 )
 
 type BlockRepository interface {
-	GetBlocks() ([]model.Block, error)
-	GetBlockHeights() ([]string, error)
-	GetBlockByHeight(height string) (model.Block, error)
+	GetBlocks() (*[]model.Block, error)
+	GetBlockHeights() (*[]string, error)
+	GetBlockByHeight(height string) (*model.Block, error)
 	CreateBlock(c context.Context, block *model.Block) error
 	CreateBlocks(c context.Context, blocks []*model.Block) error
 }
@@ -26,10 +26,10 @@ func NewBlockRepository(db *db.DB) BlockRepository {
 	}
 }
 
-func (br *blockRepository) GetBlocks() ([]model.Block, error) {
+func (br *blockRepository) GetBlocks() (*[]model.Block, error) {
 	rows, err := br.db.Client.Query(`SELECT * FROM "Block"`)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	defer rows.Close()
@@ -39,18 +39,18 @@ func (br *blockRepository) GetBlocks() ([]model.Block, error) {
 		var block model.Block
 		err = rows.Scan(&block)
 		if err != nil {
-			panic(err)
+			return nil, err
 		}
 		blocks = append(blocks, block)
 	}
 
-	return blocks, nil
+	return &blocks, nil
 }
 
-func (br *blockRepository) GetBlockHeights() ([]string, error) {
+func (br *blockRepository) GetBlockHeights() (*[]string, error) {
 	rows, err := br.db.Client.Query(`SELECT blockHeight FROM "Block"`)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	defer rows.Close()
@@ -60,29 +60,28 @@ func (br *blockRepository) GetBlockHeights() ([]string, error) {
 		var blockHeight string
 		err = rows.Scan(&blockHeight)
 		if err != nil {
-			panic(err)
+			return nil, err
 		}
 		blockHeights = append(blockHeights, blockHeight)
 	}
 
-	return blockHeights, nil
+	return &blockHeights, nil
 }
 
-func (br *blockRepository) GetBlockByHeight(height string) (model.Block, error) {
+func (br *blockRepository) GetBlockByHeight(height string) (*model.Block, error) {
 	rows, err := br.db.Client.Query(`SELECT * FROM "Block" WHERE blockHeight = %s`, height)
 	if err != nil {
-		return model.Block{}, err
+		return nil, err
 	}
-
 	defer rows.Close()
 
 	var block model.Block
 	err = rows.Scan(&block)
 	if err != nil {
-		return model.Block{}, err
+		return nil, err
 	}
 
-	return block, nil
+	return &block, nil
 }
 
 func (br *blockRepository) CreateBlock(c context.Context, block *model.Block) error {

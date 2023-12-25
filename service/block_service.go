@@ -7,8 +7,9 @@ import (
 )
 
 type BlockService interface {
-	GetBlocks(r *http.Request) ([]model.Block, error)
-	GetBlockByHeight(r *http.Request) (model.Block, error)
+	GetBlocks(r *http.Request) (*[]model.Block, error)
+	GetBlockHeights(r *http.Request) (*[]string, error)
+	GetBlockByHeight(r *http.Request) (*model.Block, error)
 }
 
 type blockService struct {
@@ -21,11 +22,15 @@ func NewBlockService(blockRepository repository.BlockRepository) BlockService {
 	}
 }
 
-func (bs *blockService) GetBlocks(r *http.Request) ([]model.Block, error) {
+func (bs *blockService) GetBlocks(r *http.Request) (*[]model.Block, error) {
 	return bs.blockRepository.GetBlocks()
 }
 
-func (bs *blockService) GetBlockByHeight(r *http.Request) (model.Block, error) {
+func (bs *blockService) GetBlockHeights(r *http.Request) (*[]string, error) {
+	return bs.blockRepository.GetBlockHeights()
+}
+
+func (bs *blockService) GetBlockByHeight(r *http.Request) (*model.Block, error) {
 	height := r.RequestURI[len("/block/"):]
 	return bs.blockRepository.GetBlockByHeight(height)
 }

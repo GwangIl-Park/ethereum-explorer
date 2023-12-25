@@ -7,7 +7,7 @@ import (
 )
 
 type MainService interface {
-	GetInformationForMain(r *http.Request) (dto.GetInformationForMainDTO, error)
+	GetInformationForMain(r *http.Request) (*dto.GetInformationForMainDTO, error)
 }
 
 type mainService struct {
@@ -20,6 +20,6 @@ func NewMainService(mainRepository repository.MainRepository) MainService {
 	}
 }
 
-func(ms *mainService) GetInformationForMain(r *http.Request) (dto.GetInformationForMainDTO, error) {
+func(ms *mainService) GetInformationForMain(r *http.Request) (*dto.GetInformationForMainDTO, error) {
 	return ms.mainRepository.GetInformationForMain()
 }

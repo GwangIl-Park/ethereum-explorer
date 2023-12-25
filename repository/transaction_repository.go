@@ -9,9 +9,9 @@ import (
 )
 
 type TransactionRepository interface {
-	GetTransactions() ([]model.Transaction, error)
-	GetTransactionByHash(hash string) (model.Transaction, error)
-	GetTransactionsByBlockNumber(blockNumber string) ([]dto.GetTransactionByBlockNumberDTO)
+	GetTransactions() (*[]model.Transaction, error)
+	GetTransactionByHash(hash string) (*model.Transaction, error)
+	GetTransactionsByBlockNumber(blockNumber string) (*[]dto.GetTransactionByBlockNumberDTO, error)
 	CreateTransaction(c context.Context, transaction *model.Transaction) error
 	CreateTransactions(c context.Context, transactions []*model.Transaction) error
 }
@@ -26,10 +26,10 @@ func NewTransactionRepository(db *db.DB) TransactionRepository {
 	}
 }
 
-func (tr *transactionRepository) GetTransactions() ([]model.Transaction, error) {
+func (tr *transactionRepository) GetTransactions() (*[]model.Transaction, error) {
 	rows, err := tr.db.Client.Query(`SELECT * FROM Transaction`)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	defer rows.Close()
 
@@ -38,33 +38,35 @@ func (tr *transactionRepository) GetTransactions() ([]model.Transaction, error) 
 		var transaction model.Transaction
 		err = rows.Scan(&transaction)
 		if err != nil {
-			panic(err)
+			return nil, err
 		}
 		transactions = append(transactions, transaction)
 	}
 
-	return transactions, nil
+	return &transactions, nil
 }
 
-func (tr *transactionRepository) GetTransactionByHash(hashParam string) (model.Transaction, error) {
+func (tr *transactionRepository) GetTransactionByHash(hashParam string) (*model.Transaction, error) {
 	rows, err := tr.db.Client.Query(`SELECT * FROM Transaction WHERE hash=%s`, hashParam)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	defer rows.Close()
 
 	var transaction model.Transaction
-	err = rows.Scan(&transaction)
-	if err != nil {
-		panic(err)
+	for rows.Next() {
+		err = rows.Scan(&transaction)
+		if err != nil {
+			return nil, err
+		}
 	}
-	return transaction, nil
+	return &transaction, nil
 }
 
-func (tr *transactionRepository) GetTransactionsByBlockNumber(blockNumber string) ([]dto.GetTransactionByBlockNumberDTO) {
+func (tr *transactionRepository) GetTransactionsByBlockNumber(blockNumber string) (*[]dto.GetTransactionByBlockNumberDTO, error) {
 	rows, err := tr.db.Client.Query(`SELECT txHash, timestamp, from, to, value, txFee FROM transaction WHERE blockNumber = %s`, blockNumber)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	defer rows.Close()
 
@@ -73,12 +75,12 @@ func (tr *transactionRepository) GetTransactionsByBlockNumber(blockNumber string
 		var getTransactionByBlockNumberDTO dto.GetTransactionByBlockNumberDTO
 		err = rows.Scan(&getTransactionByBlockNumberDTO)
 		if err != nil {
-			panic(err)
+			return nil, err
 		}
 		getTransactionsByBlockNumberDTO = append(getTransactionsByBlockNumberDTO, getTransactionByBlockNumberDTO)
 	}
 
-	return getTransactionsByBlockNumberDTO
+	return &getTransactionsByBlockNumberDTO, nil
 }
 
 func (tr *transactionRepository) CreateTransaction(c context.Context, transaction *model.Transaction) error {

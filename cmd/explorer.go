@@ -8,14 +8,13 @@ import (
 	"ethereum-explorer/logger"
 	"ethereum-explorer/repository"
 	"ethereum-explorer/router"
+	"ethereum-explorer/server"
 	"ethereum-explorer/service"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
 	"time"
-
-	server "ethereum-explorer/server"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -40,7 +39,7 @@ var rootCmd = &cobra.Command{
 			return err
 		}
 		
-		db, err := db.NewDB(context.Background(), *cfg, []string{"blocks", "transactions"})
+		db, err := db.NewDB(context.Background(), *cfg)
 		if err != nil {
 			logger.Logger.WithError(err).Error("NewDB Error")
 			return err
@@ -48,36 +47,40 @@ var rootCmd = &cobra.Command{
 		defer db.Close()
 
 		timeout := time.Duration(1) * time.Second
-/*
-		ethClient, err := ethClient.NewEthClient(cfg)
-		if err != nil {
-			logger.Logger.WithError(err).Error("NewEthClient Error")
-			return err
-		}
-		defer ethClient.Http.Close()
-		defer ethClient.Ws.Close()
 
-		errorChan := make(chan error)
-		initBlockNumberChan := make(chan *big.Int)
+		// ethClient, err := ethClient.NewEthClient(cfg)
+		// if err != nil {
+		// 	logger.Logger.WithError(err).Error("NewEthClient Error")
+		// 	return err
+		// }
+		// defer ethClient.Http.Close()
+		// defer ethClient.Ws.Close()
 
-		sub, err := subscriber.NewSubscriber(ethClient, db, errorChan)
-		if err != nil {
-			logger.Logger.WithError(err).Error("NewSubscriber Error")
-			return err
-		}
+		// errorChan := make(chan error)
+		// initBlockNumberChan := make(chan *big.Int)
 
-		go sub.ProcessSubscribe(ethClient, initBlockNumberChan)
+		// sub, err := subscriber.NewSubscriber(ethClient, db, errorChan)
+		// if err != nil {
+		// 	logger.Logger.WithError(err).Error("NewSubscriber Error")
+		// 	return err
+		// }
 
-		initBlock := <-initBlockNumberChan
+		// go sub.ProcessSubscribe(ethClient, initBlockNumberChan)
 
-		go sub.ProcessPrevious(ethClient, db, initBlock)
+		// initBlock := <-initBlockNumberChan
 
-		sv := server.NewServer(db, cfg, ethClient, sub, timeout)
-		*/
+		// go sub.ProcessPrevious(ethClient, db, initBlock)
+
+		// sv := server.NewServer(db, cfg, ethClient, sub, timeout)
+		
 		sv := server.NewServer(db, cfg, nil, nil, timeout)
 
 		r := http.NewServeMux()
 
+		errr:=db.Client.Ping()
+		if errr != nil {
+			fmt.Println(errr)
+		}
 		accountRepository := repository.NewAccountRepository(db)
 		blockRepository := repository.NewBlockRepository(db)
 		mainRepository := repository.NewMainRepository(db)

@@ -7,7 +7,7 @@ import (
 )
 
 type AccountService interface {
-	GetAccountByAddress(r *http.Request) (dto.GetAccountByAddressDTO, error)
+	GetAccountByAddress(r *http.Request) (*dto.GetAccountByAddressDTO, error)
 }
 
 type accountService struct {
@@ -20,7 +20,7 @@ func NewAccountService(accountRepository repository.AccountRepository) AccountSe
 	}
 }
 
-func(as *accountService) GetAccountByAddress(r *http.Request) (dto.GetAccountByAddressDTO, error) {
+func(as *accountService) GetAccountByAddress(r *http.Request) (*dto.GetAccountByAddressDTO, error) {
 	address := r.RequestURI[len("/address/"):]
 	return as.accountRepository.GetAccountByAddress(address)
 }
