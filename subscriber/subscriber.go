@@ -4,7 +4,6 @@ import (
 	"context"
 	dbPackage "ethereum-explorer/db"
 	"ethereum-explorer/ethClient"
-	"ethereum-explorer/model"
 	"ethereum-explorer/service"
 	"math/big"
 
@@ -14,7 +13,7 @@ import (
 type Subscriber struct {
 	headerChan chan *types.Header
 	ethClient  *ethClient.EthClient
-	bs				 service.BlockService
+	bs         service.BlockService
 	ts         service.TransactionService
 	errorChan  chan error
 }
@@ -32,44 +31,8 @@ func NewSubscriber(ethClient *ethClient.EthClient, blockService service.BlockSer
 }
 
 func (sub *Subscriber) insertNewBlocks(blocks []*types.Block) {
-	ctx := context.Background()
-
-	var blockmodel []*model.Block
-	var transactionmodel []*model.Transaction
-
-	for _, block := range blocks {
-		transactions := block.Transactions()
-		if transactions.Len() > 0 {
-			for _, transaction := range transactions {
-				receipt, err := sub.ethClient.Http.TransactionReceipt(ctx, transaction.Hash())
-				if err != nil {
-					sub.errorChan <- err
-					return
-				}
-				transactionModel, err := model.MakeTransactionModelFromTypes(receipt, transaction, *block)
-				if err != nil {
-					sub.errorChan <- err
-					return
-				}
-				transactionmodel = append(transactionmodel, transactionModel)
-			}
-		}
-		blockmodel = append(blockmodel, model.MakeBlockModelFromTypes(block))
-	}
-
-	if len(transactionmodel) > 0 {
-		err := sub.ts.CreateTransactions(transactionmodel)
-		if err != nil {
-			sub.errorChan <- err
-			return
-		}
-	}
-
-	err := sub.bs.CreateBlocks(blockmodel)
-	if err != nil {
-		sub.errorChan <- err
-		return
-	}
+	sub.bs.CreateBlocksFromCoreBlocks(blocks)
+	sub.ts.CreateTransactionsFromCoreBlocks(sub.ethClient, blocks)
 }
 
 func (sub *Subscriber) ProcessSubscribe(ethClient *ethClient.EthClient, initBlockNumberChan chan *big.Int) {

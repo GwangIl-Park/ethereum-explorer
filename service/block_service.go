@@ -4,6 +4,8 @@ import (
 	"ethereum-explorer/dto"
 	"ethereum-explorer/model"
 	"ethereum-explorer/repository"
+
+	"github.com/ethereum/go-ethereum/core/types"
 )
 
 type BlockService interface {
@@ -12,6 +14,7 @@ type BlockService interface {
 	GetBlockByHeight(height string) (*dto.GetBlockByHeightDTO, error)
 	CreateBlock(block *model.Block) error
 	CreateBlocks(blocks []*model.Block) error
+	CreateBlocksFromCoreBlocks(blocks []*types.Block) error
 }
 
 type blockService struct {
@@ -42,4 +45,12 @@ func (bs *blockService) CreateBlock(block *model.Block) error {
 
 func (bs *blockService) CreateBlocks(blocks []*model.Block) error {
 	return bs.blockRepository.CreateBlocks(blocks)
+}
+
+func (bs *blockService) CreateBlocksFromCoreBlocks(blocks []*types.Block) error {
+	var blockmodel []*model.Block
+	for _, block := range blocks {
+		blockmodel = append(blockmodel, model.MakeBlockModelFromTypes(block))
+	}
+	return bs.blockRepository.CreateBlocks(blockmodel)
 }
