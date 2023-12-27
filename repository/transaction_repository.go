@@ -46,18 +46,10 @@ func (tr *transactionRepository) GetTransactions() (*dto.GetTransactionsDTO, err
 }
 
 func (tr *transactionRepository) GetTransactionByHash(hashParam string) (*dto.GetTransactionsByHashDTO, error) {
-	rows, err := tr.db.Client.Query(`SELECT * FROM Transaction WHERE hash=%s`, hashParam)
+	var getTransactionsByHashDTO *dto.GetTransactionsByHashDTO
+	err := tr.db.Client.QueryRow(`SELECT * FROM Transaction WHERE hash=%s`, hashParam).Scan(&getTransactionsByHashDTO.GetTransactionsResult)
 	if err != nil {
 		return nil, err
-	}
-	defer rows.Close()
-
-	var getTransactionsByHashDTO *dto.GetTransactionsByHashDTO
-	for rows.Next() {
-		err = rows.Scan(&getTransactionsByHashDTO.GetTransactionsResult)
-		if err != nil {
-			return nil, err
-		}
 	}
 	return getTransactionsByHashDTO, nil
 }

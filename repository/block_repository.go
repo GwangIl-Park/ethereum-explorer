@@ -69,20 +69,11 @@ func (br *blockRepository) GetBlockHeights() (*dto.GetBlockHeightsDTO, error) {
 }
 
 func (br *blockRepository) GetBlockByHeight(height string) (*dto.GetBlockByHeightDTO, error) {
-	rows, err := br.db.Client.Query(`SELECT * FROM "Block" WHERE blockHeight = %s`, height)
+	var getBlockByHeightDTO *dto.GetBlockByHeightDTO
+	err := br.db.Client.QueryRow(`SELECT * FROM "Block" WHERE blockHeight = %s`, height).Scan(&getBlockByHeightDTO.Block)
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
-
-	var getBlockByHeightDTO *dto.GetBlockByHeightDTO
-	for rows.Next() {
-		err = rows.Scan(&getBlockByHeightDTO.Block)
-		if err != nil {
-			return nil, err
-		}
-	}
-
 	return getBlockByHeightDTO, nil
 }
 

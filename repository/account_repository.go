@@ -3,6 +3,7 @@ package repository
 import (
 	"ethereum-explorer/db"
 	"ethereum-explorer/dto"
+	"strconv"
 )
 
 type AccountRepository interface {
@@ -20,25 +21,24 @@ func NewAccountRepository(db *db.DB) AccountRepository {
 }
 
 func (ar *accountRepository) GetAccountByAddress(address string) (*dto.GetAccountByAddressDTO, error) {
-	accountRow, err := ar.db.Client.Query(`SELECT address, balance FROM account WHERE address = $1`, address)
+	var getAccountByAddressDTO *dto.GetAccountByAddressDTO
+
+	var balance string
+	err := ar.db.Client.QueryRow(`SELECT balance FROM account WHERE address = $1`, address).Scan(&balance)
 	if err != nil {
 		return nil, err
 	}
-	defer accountRow.Close()
-	
+
+	getAccountByAddressDTO.GetAccountByAddressResult.Balance, err = strconv.ParseUint(balance, 10, 64)
+	if err != nil {
+		return nil, err
+	}
+
 	txRows, err := ar.db.Client.Query(`SELECT txhash, blockheight, timestamp, fromaddress, toaddress, value, fee FROM transaction WHERE fromaddress = $1 OR toaddress = $2`, address, address)
 	if err != nil {
 		return nil, err
 	}
 	defer txRows.Close()
-
-	var getAccountByAddressDTO *dto.GetAccountByAddressDTO
-	for accountRow.Next() {
-		err = accountRow.Scan(&getAccountByAddressDTO.GetAccountByAddressResult.Address, &getAccountByAddressDTO.GetAccountByAddressResult.Balance)
-		if err != nil {
-			return nil, err
-		}
-	}
 
 	for txRows.Next() {
 		var transactionOfAccount dto.TransactionOfAccount
